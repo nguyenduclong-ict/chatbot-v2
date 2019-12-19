@@ -1,0 +1,12 @@
+# node_module
+node_modules/
+
+# env
+.env
+
+# pm2
+ecosystem*
+
+# npm
+package-lock.json
+yarn.lock
