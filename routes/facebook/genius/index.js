@@ -1,8 +1,6 @@
 var express = require('express');
 var router = express.Router();
 var admin = require('firebase-admin');
-const requireAll = require(__dirroot + '/utils/requireAll');
-const pages = requireAll(__dirname + '/_pages');
 const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _get(
   require(__dirroot + '/config'),
   'facebook/genius'

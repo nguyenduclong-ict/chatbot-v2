@@ -3,14 +3,12 @@ require('./utils/firebase');
 require('./utils/queue');
 // setup global variable
 global.__dirroot = __dirname;
-
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var indexRouter = require('./routes/_index');
-
+const { initRouter } = require('./utils/router');
 var app = express();
 
 // view engine setup
@@ -23,7 +21,14 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
+// app.use('/', indexRouter);
+const router = initRouter(
+  path.join(__dirname, 'routes'),
+  path.join(__dirname, 'middlewares'),
+  /^_/gm,
+  []
+);
+app.use(router);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -33,6 +38,7 @@ app.use(function(req, res, next) {
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
+  if (err) _log(err);
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
@@ -51,5 +57,8 @@ app.use(function(err, req, res, next) {
     res.render('error');
   }
 });
+
+const { connectDatabase } = require('./services/MongoService');
+connectDatabase().then(() => {});
 
 module.exports = app;

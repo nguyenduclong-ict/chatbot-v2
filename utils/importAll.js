@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+const fs = require('fs');
+const path = require('path');
 
 /**
  *
@@ -7,27 +7,30 @@ const path = require("path");
  * @param {RegExp} execpt  except file name
  */
 
-function requireAll(dirPath, execpt) {
+function importAll(dirPath, execpt) {
   let items = [];
   let files = fs
     .readdirSync(dirPath)
     .map(f => path.parse(f))
-    .filter(
-      f => (execpt ? !execpt.test(f.name) : true) && (!f.ext || f.ext === ".js") // Acept file .js
-    );
+    .filter(f => {
+      return (
+        (execpt ? !new RegExp(execpt).test(f.name) : true) &&
+        (!f.ext || f.ext === '.js')
+      ); // Acept file .js
+    });
 
   files.forEach(file => {
     if (!file.ext) {
-      let subFiles = requireAll(`${dirPath}/${file.name}`, execpt).map(f => ({
+      let subFiles = importAll(`${dirPath}/${file.name}`, execpt).map(f => ({
         ...f,
-        name: file.name + (f.name !== "index" ? `/${f.name}` : "")
+        name: file.name + (f.name !== 'index' ? `/${f.name}` : '')
       }));
 
       // push files to items
       items = [...items, ...subFiles];
     } else {
       const item = {
-        name: file.name === "index" ? "" : file.name,
+        name: file.name === 'index' ? '' : file.name,
         instance: require(`${dirPath}/${file.name}`)
       };
       items.push(item);
@@ -36,4 +39,4 @@ function requireAll(dirPath, execpt) {
   return items;
 }
 
-module.exports = requireAll;
+module.exports = importAll;

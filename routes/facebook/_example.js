@@ -1,11 +1,17 @@
-__dirroot = __dirroot || "/Users/longn/Code/work/webhook";
-var express = require("express");
+__dirroot = __dirroot || '/Users/longn/Code/work/webhook';
+var express = require('express');
 var router = express.Router();
-var request = require("request");
+var request = require('request');
 const { PAGE_ACCESS_TOKEN, VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _get(
-  require(__dirroot + "/config"),
-  "facebook/example"
+  require(__dirroot + '/config'),
+  'facebook/example'
 );
+
+const { PAGE_ACCESS_TOKEN, VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _get(
+  require(__dirroot + '/config'),
+  'facebook/example'
+);
+
 /*
  * Be sure to setup your config values before running this code. You can
  * set them using environment variables or modifying the config file in /config.
@@ -13,7 +19,7 @@ const { PAGE_ACCESS_TOKEN, VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _get(
  */
 
 if (!(APP_SECRET && VERIFY_TOKEN && PAGE_ACCESS_TOKEN && SERVER_URL)) {
-  console.error("Missing config values");
+  console.error('Missing config values');
   process.exit(1);
 }
 
@@ -22,15 +28,15 @@ if (!(APP_SECRET && VERIFY_TOKEN && PAGE_ACCESS_TOKEN && SERVER_URL)) {
  * setup is the same token used here.
  *
  */
-router.get("/webhook", function(req, res) {
+router.get('/webhook', function(req, res) {
   if (
-    req.query["hub.mode"] === "subscribe" &&
-    req.query["hub.verify_token"] === VERIFY_TOKEN
+    req.query['hub.mode'] === 'subscribe' &&
+    req.query['hub.verify_token'] === VERIFY_TOKEN
   ) {
-    _log("Validating webhook");
-    res.status(200).send(req.query["hub.challenge"]);
+    _log('Validating webhook');
+    res.status(200).send(req.query['hub.challenge']);
   } else {
-    console.error("Failed validation. Make sure the validation tokens match.");
+    console.error('Failed validation. Make sure the validation tokens match.');
     res.sendStatus(403);
   }
 });
@@ -42,11 +48,11 @@ router.get("/webhook", function(req, res) {
  * https://developers.facebook.com/docs/messenger-platform/product-overview/setup#subscribe_app
  *
  */
-router.post("/webhook", function(req, res) {
+router.post('/webhook', function(req, res) {
   var data = req.body;
   _log(data);
   // Make sure this is a page subscription
-  if (data.object == "page") {
+  if (data.object == 'page') {
     // Iterate over each entry
     // There may be multiple if batched
     data.entry.forEach(function(pageEntry) {
@@ -68,7 +74,7 @@ router.post("/webhook", function(req, res) {
         } else if (messagingEvent.account_linking) {
           receivedAccountLink(messagingEvent);
         } else {
-          _log("Webhook received unknown messagingEvent: ", messagingEvent);
+          _log('Webhook received unknown messagingEvent: ', messagingEvent);
         }
       });
     });
@@ -86,18 +92,18 @@ router.post("/webhook", function(req, res) {
  * (sendAccountLinking) is pointed to this URL.
  *
  */
-router.get("/authorize", function(req, res) {
+router.get('/authorize', function(req, res) {
   var accountLinkingToken = req.query.account_linking_token;
   var redirectURI = req.query.redirect_uri;
 
   // Authorization Code should be generated per user by the developer. This will
   // be passed to the Account Linking callback.
-  var authCode = "1234567890";
+  var authCode = '1234567890';
 
   // Redirect users to this URI on successful login
-  var redirectURISuccess = redirectURI + "&authorization_code=" + authCode;
+  var redirectURISuccess = redirectURI + '&authorization_code=' + authCode;
 
-  res.render("authorize", {
+  res.render('authorize', {
     accountLinkingToken: accountLinkingToken,
     redirectURI: redirectURI,
     redirectURISuccess: redirectURISuccess
@@ -113,21 +119,21 @@ router.get("/authorize", function(req, res) {
  *
  */
 function verifyRequestSignature(req, res, buf) {
-  var signature = req.headers["x-hub-signature"];
+  var signature = req.headers['x-hub-signature'];
 
   if (!signature) {
     // For testing, let's log an error. In production, you should throw an
     // error.
     console.error("Couldn't validate the signature.");
   } else {
-    var elements = signature.split("=");
+    var elements = signature.split('=');
     var method = elements[0];
     var signatureHash = elements[1];
 
     var expectedHash = crypto
-      .createHmac("sha1", APP_SECRET)
+      .createHmac('sha1', APP_SECRET)
       .update(buf)
-      .digest("hex");
+      .digest('hex');
 
     if (signatureHash != expectedHash) {
       throw new Error("Couldn't validate the request signature.");
@@ -156,7 +162,7 @@ function receivedAuthentication(event) {
   var passThroughParam = event.optin.ref;
 
   _log(
-    "Received authentication for user %d and page %d with pass " +
+    'Received authentication for user %d and page %d with pass ' +
       "through param '%s' at %d",
     senderID,
     recipientID,
@@ -166,7 +172,7 @@ function receivedAuthentication(event) {
 
   // When an authentication is received, we'll send a message back to the sender
   // to let them know it was successful.
-  sendTextMessage(senderID, "Authentication successful");
+  sendTextMessage(senderID, 'Authentication successful');
 }
 
 /*
@@ -190,7 +196,7 @@ function receivedMessage(event) {
   var message = event.message;
 
   _log(
-    "Received message for user %d and page %d at %d with message:",
+    'Received message for user %d and page %d at %d with message:',
     senderID,
     recipientID,
     timeOfMessage
@@ -210,7 +216,7 @@ function receivedMessage(event) {
   if (isEcho) {
     // Just logging message echoes to console
     _log(
-      "Received echo for message %s and app %d with metadata %s",
+      'Received echo for message %s and app %d with metadata %s',
       messageId,
       appId,
       metadata
@@ -219,12 +225,12 @@ function receivedMessage(event) {
   } else if (quickReply) {
     var quickReplyPayload = quickReply.payload;
     _log(
-      "Quick reply for message %s with payload %s",
+      'Quick reply for message %s with payload %s',
       messageId,
       quickReplyPayload
     );
 
-    sendTextMessage(senderID, "Quick reply tapped");
+    sendTextMessage(senderID, 'Quick reply tapped');
     return;
   }
 
@@ -234,67 +240,67 @@ function receivedMessage(event) {
     // the text we received.
     switch (
       messageText
-        .replace(/[^\w\s]/gi, "")
+        .replace(/[^\w\s]/gi, '')
         .trim()
         .toLowerCase()
     ) {
-      case "hello":
-      case "hi":
+      case 'hello':
+      case 'hi':
         sendHiMessage(senderID);
         break;
 
-      case "image":
+      case 'image':
         requiresServerURL(sendImageMessage, [senderID]);
         break;
 
-      case "gif":
+      case 'gif':
         requiresServerURL(sendGifMessage, [senderID]);
         break;
 
-      case "audio":
+      case 'audio':
         requiresServerURL(sendAudioMessage, [senderID]);
         break;
 
-      case "video":
+      case 'video':
         requiresServerURL(sendVideoMessage, [senderID]);
         break;
 
-      case "file":
+      case 'file':
         requiresServerURL(sendFileMessage, [senderID]);
         break;
 
-      case "button":
+      case 'button':
         sendButtonMessage(senderID);
         break;
 
-      case "generic":
+      case 'generic':
         requiresServerURL(sendGenericMessage, [senderID]);
         break;
 
-      case "receipt":
+      case 'receipt':
         requiresServerURL(sendReceiptMessage, [senderID]);
         break;
 
-      case "quick reply":
+      case 'quick reply':
         sendQuickReply(senderID);
         break;
 
-      case "read receipt":
+      case 'read receipt':
         sendReadReceipt(senderID);
         break;
 
-      case "typing on":
+      case 'typing on':
         sendTypingOn(senderID);
         break;
 
-      case "typing off":
+      case 'typing off':
         sendTypingOff(senderID);
         break;
 
-      case "account linking":
+      case 'account linking':
         requiresServerURL(sendAccountLinking, [senderID]);
         break;
-      case "info":
+      case 'info':
         sendTextMessage(
           senderID,
           `I'm Bot of Long' Master. I can help me contact with Master`
@@ -304,7 +310,7 @@ function receivedMessage(event) {
         sendTextMessage(senderID, messageText);
     }
   } else if (messageAttachments) {
-    sendTextMessage(senderID, "Message with attachment received");
+    sendTextMessage(senderID, 'Message with attachment received');
   }
 }
 
@@ -325,11 +331,11 @@ function receivedDeliveryConfirmation(event) {
 
   if (messageIDs) {
     messageIDs.forEach(function(messageID) {
-      _log("Received delivery confirmation for message ID: %s", messageID);
+      _log('Received delivery confirmation for message ID: %s', messageID);
     });
   }
 
-  _log("All message before %d were delivered.", watermark);
+  _log('All message before %d were delivered.', watermark);
 }
 
 /*
@@ -349,7 +355,7 @@ function receivedPostback(event) {
   var payload = event.postback.payload;
 
   _log(
-    "Received postback for user %d and page %d with payload '%s' " + "at %d",
+    "Received postback for user %d and page %d with payload '%s' " + 'at %d',
     senderID,
     recipientID,
     payload,
@@ -358,7 +364,7 @@ function receivedPostback(event) {
 
   // When a postback is called, we'll send a message back to the sender to
   // let them know it was successful
-  sendTextMessage(senderID, "Postback called");
+  sendTextMessage(senderID, 'Postback called');
 }
 
 /*
@@ -377,7 +383,7 @@ function receivedMessageRead(event) {
   var sequenceNumber = event.read.seq;
 
   _log(
-    "Received message read event for watermark %d and sequence " + "number %d",
+    'Received message read event for watermark %d and sequence ' + 'number %d',
     watermark,
     sequenceNumber
   );
@@ -399,8 +405,8 @@ function receivedAccountLink(event) {
   var authCode = event.account_linking.authorization_code;
 
   _log(
-    "Received account link event with for user %d with status %s " +
-      "and auth code %s ",
+    'Received account link event with for user %d with status %s ' +
+      'and auth code %s ',
     senderID,
     status,
     authCode
@@ -412,7 +418,7 @@ function receivedAccountLink(event) {
  * in default.json before they can access local resources likes images/videos.
  */
 function requiresServerURL(next, [recipientId, ...args]) {
-  if (SERVER_URL === "to_be_set_manually") {
+  if (SERVER_URL === 'to_be_set_manually') {
     var messageData = {
       recipient: {
         id: recipientId
@@ -467,9 +473,9 @@ function sendImageMessage(recipientId) {
     },
     message: {
       attachment: {
-        type: "image",
+        type: 'image',
         payload: {
-          url: SERVER_URL + "/assets/rift.png"
+          url: SERVER_URL + '/assets/rift.png'
         }
       }
     }
@@ -489,9 +495,9 @@ function sendGifMessage(recipientId) {
     },
     message: {
       attachment: {
-        type: "image",
+        type: 'image',
         payload: {
-          url: SERVER_URL + "/assets/instagram_logo.gif"
+          url: SERVER_URL + '/assets/instagram_logo.gif'
         }
       }
     }
@@ -511,9 +517,9 @@ function sendAudioMessage(recipientId) {
     },
     message: {
       attachment: {
-        type: "audio",
+        type: 'audio',
         payload: {
-          url: SERVER_URL + "/assets/sample.mp3"
+          url: SERVER_URL + '/assets/sample.mp3'
         }
       }
     }
@@ -533,9 +539,9 @@ function sendVideoMessage(recipientId) {
     },
     message: {
       attachment: {
-        type: "video",
+        type: 'video',
         payload: {
-          url: SERVER_URL + "/assets/allofus480.mov"
+          url: SERVER_URL + '/assets/allofus480.mov'
         }
       }
     }
@@ -555,9 +561,9 @@ function sendFileMessage(recipientId) {
     },
     message: {
       attachment: {
-        type: "file",
+        type: 'file',
         payload: {
-          url: SERVER_URL + "/assets/test.txt"
+          url: SERVER_URL + '/assets/test.txt'
         }
       }
     }
@@ -577,7 +583,7 @@ function sendTextMessage(recipientId, messageText) {
     },
     message: {
       text: messageText,
-      metadata: "DEVELOPER_DEFINED_METADATA"
+      metadata: 'DEVELOPER_DEFINED_METADATA'
     }
   };
 
@@ -595,25 +601,25 @@ function sendButtonMessage(recipientId) {
     },
     message: {
       attachment: {
-        type: "template",
+        type: 'template',
         payload: {
-          template_type: "button",
-          text: "This is test text",
+          template_type: 'button',
+          text: 'This is test text',
           buttons: [
             {
-              type: "web_url",
-              url: "https://www.oculus.com/en-us/rift/",
-              title: "Open Web URL"
+              type: 'web_url',
+              url: 'https://www.oculus.com/en-us/rift/',
+              title: 'Open Web URL'
             },
             {
-              type: "postback",
-              title: "Trigger Postback",
-              payload: "DEVELOPER_DEFINED_PAYLOAD"
+              type: 'postback',
+              title: 'Trigger Postback',
+              payload: 'DEVELOPER_DEFINED_PAYLOAD'
             },
             {
-              type: "phone_number",
-              title: "Call Phone Number",
-              payload: "+16505551234"
+              type: 'phone_number',
+              title: 'Call Phone Number',
+              payload: '+16505551234'
             }
           ]
         }
@@ -635,43 +641,43 @@ function sendGenericMessage(recipientId) {
     },
     message: {
       attachment: {
-        type: "template",
+        type: 'template',
         payload: {
-          template_type: "generic",
+          template_type: 'generic',
           elements: [
             {
-              title: "rift",
-              subtitle: "Next-generation virtual reality",
-              item_url: "https://www.oculus.com/en-us/rift/",
-              image_url: SERVER_URL + "/assets/rift.png",
+              title: 'rift',
+              subtitle: 'Next-generation virtual reality',
+              item_url: 'https://www.oculus.com/en-us/rift/',
+              image_url: SERVER_URL + '/assets/rift.png',
               buttons: [
                 {
-                  type: "web_url",
-                  url: "https://www.oculus.com/en-us/rift/",
-                  title: "Open Web URL"
+                  type: 'web_url',
+                  url: 'https://www.oculus.com/en-us/rift/',
+                  title: 'Open Web URL'
                 },
                 {
-                  type: "postback",
-                  title: "Call Postback",
-                  payload: "Payload for first bubble"
+                  type: 'postback',
+                  title: 'Call Postback',
+                  payload: 'Payload for first bubble'
                 }
               ]
             },
             {
-              title: "touch",
-              subtitle: "Your Hands, Now in VR",
-              item_url: "https://www.oculus.com/en-us/touch/",
-              image_url: SERVER_URL + "/assets/touch.png",
+              title: 'touch',
+              subtitle: 'Your Hands, Now in VR',
+              item_url: 'https://www.oculus.com/en-us/touch/',
+              image_url: SERVER_URL + '/assets/touch.png',
               buttons: [
                 {
-                  type: "web_url",
-                  url: "https://www.oculus.com/en-us/touch/",
-                  title: "Open Web URL"
+                  type: 'web_url',
+                  url: 'https://www.oculus.com/en-us/touch/',
+                  title: 'Open Web URL'
                 },
                 {
-                  type: "postback",
-                  title: "Call Postback",
-                  payload: "Payload for second bubble"
+                  type: 'postback',
+                  title: 'Call Postback',
+                  payload: 'Payload for second bubble'
                 }
               ]
             }
@@ -690,7 +696,7 @@ function sendGenericMessage(recipientId) {
  */
 function sendReceiptMessage(recipientId) {
   // Generate a random receipt ID as the API requires a unique ID
-  var receiptId = "order" + Math.floor(Math.random() * 1000);
+  var receiptId = 'order' + Math.floor(Math.random() * 1000);
 
   var messageData = {
     recipient: {
@@ -698,39 +704,39 @@ function sendReceiptMessage(recipientId) {
     },
     message: {
       attachment: {
-        type: "template",
+        type: 'template',
         payload: {
-          template_type: "receipt",
-          recipient_name: "Peter Chang",
+          template_type: 'receipt',
+          recipient_name: 'Peter Chang',
           order_number: receiptId,
-          currency: "USD",
-          payment_method: "Visa 1234",
-          timestamp: "1428444852",
+          currency: 'USD',
+          payment_method: 'Visa 1234',
+          timestamp: '1428444852',
           elements: [
             {
-              title: "Oculus Rift",
-              subtitle: "Includes: headset, sensor, remote",
+              title: 'Oculus Rift',
+              subtitle: 'Includes: headset, sensor, remote',
               quantity: 1,
               price: 599.0,
-              currency: "USD",
-              image_url: SERVER_URL + "/assets/riftsq.png"
+              currency: 'USD',
+              image_url: SERVER_URL + '/assets/riftsq.png'
             },
             {
-              title: "Samsung Gear VR",
-              subtitle: "Frost White",
+              title: 'Samsung Gear VR',
+              subtitle: 'Frost White',
               quantity: 1,
               price: 99.99,
-              currency: "USD",
-              image_url: SERVER_URL + "/assets/gearvrsq.png"
+              currency: 'USD',
+              image_url: SERVER_URL + '/assets/gearvrsq.png'
             }
           ],
           address: {
-            street_1: "1 Hacker Way",
-            street_2: "",
-            city: "Menlo Park",
-            postal_code: "94025",
-            state: "CA",
-            country: "US"
+            street_1: '1 Hacker Way',
+            street_2: '',
+            city: 'Menlo Park',
+            postal_code: '94025',
+            state: 'CA',
+            country: 'US'
           },
           summary: {
             subtotal: 698.99,
@@ -740,11 +746,11 @@ function sendReceiptMessage(recipientId) {
           },
           adjustments: [
             {
-              name: "New Customer Discount",
+              name: 'New Customer Discount',
               amount: -50
             },
             {
-              name: "$100 Off Coupon",
+              name: '$100 Off Coupon',
               amount: -100
             }
           ]
@@ -769,19 +775,19 @@ function sendQuickReply(recipientId) {
       text: "What's your favorite movie genre?",
       quick_replies: [
         {
-          content_type: "text",
-          title: "Action",
-          payload: "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_ACTION"
+          content_type: 'text',
+          title: 'Action',
+          payload: 'DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_ACTION'
         },
         {
-          content_type: "text",
-          title: "Comedy",
-          payload: "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_COMEDY"
+          content_type: 'text',
+          title: 'Comedy',
+          payload: 'DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_COMEDY'
         },
         {
-          content_type: "text",
-          title: "Drama",
-          payload: "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_DRAMA"
+          content_type: 'text',
+          title: 'Drama',
+          payload: 'DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_DRAMA'
         }
       ]
     }
@@ -795,13 +801,13 @@ function sendQuickReply(recipientId) {
  *
  */
 function sendReadReceipt(recipientId) {
-  _log("Sending a read receipt to mark message as seen");
+  _log('Sending a read receipt to mark message as seen');
 
   var messageData = {
     recipient: {
       id: recipientId
     },
-    sender_action: "mark_seen"
+    sender_action: 'mark_seen'
   };
 
   callSendAPI(messageData);
@@ -812,13 +818,13 @@ function sendReadReceipt(recipientId) {
  *
  */
 function sendTypingOn(recipientId) {
-  _log("Turning typing indicator on");
+  _log('Turning typing indicator on');
 
   var messageData = {
     recipient: {
       id: recipientId
     },
-    sender_action: "typing_on"
+    sender_action: 'typing_on'
   };
 
   callSendAPI(messageData);
@@ -829,13 +835,13 @@ function sendTypingOn(recipientId) {
  *
  */
 function sendTypingOff(recipientId) {
-  _log("Turning typing indicator off");
+  _log('Turning typing indicator off');
 
   var messageData = {
     recipient: {
       id: recipientId
     },
-    sender_action: "typing_off"
+    sender_action: 'typing_off'
   };
 
   callSendAPI(messageData);
@@ -852,14 +858,14 @@ function sendAccountLinking(recipientId) {
     },
     message: {
       attachment: {
-        type: "template",
+        type: 'template',
         payload: {
-          template_type: "button",
-          text: "Welcome. Link your account.",
+          template_type: 'button',
+          text: 'Welcome. Link your account.',
           buttons: [
             {
-              type: "account_link",
-              url: SERVER_URL + "/authorize"
+              type: 'account_link',
+              url: SERVER_URL + '/authorize'
             }
           ]
         }
@@ -878,9 +884,9 @@ function sendAccountLinking(recipientId) {
 function callSendAPI(messageData) {
   request(
     {
-      uri: "https://graph.facebook.com/v2.6/me/messages",
+      uri: 'https://graph.facebook.com/v2.6/me/messages',
       qs: { access_token: PAGE_ACCESS_TOKEN },
-      method: "POST",
+      method: 'POST',
       json: messageData
     },
     function(error, response, body) {
@@ -890,16 +896,16 @@ function callSendAPI(messageData) {
 
         if (messageId) {
           _log(
-            "Successfully sent message with id %s to recipient %s",
+            'Successfully sent message with id %s to recipient %s',
             messageId,
             recipientId
           );
         } else {
-          _log("Successfully called Send API for recipient %s", recipientId);
+          _log('Successfully called Send API for recipient %s', recipientId);
         }
       } else {
         console.error(
-          "Failed calling Send API",
+          'Failed calling Send API',
           response.statusCode,
           response.statusMessage,
           body.error
