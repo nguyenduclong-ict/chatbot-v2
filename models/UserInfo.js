@@ -13,6 +13,10 @@ var schema = new Schema({
       }
     }
   },
+  facebook_ids: {
+    type: Schema.Types.Array,
+    default: []
+  },
   created: { type: Date, default: Date.now() }
 });
 var UserInfo = mongoose.model('UserInfo', schema);

@@ -100,4 +100,5 @@ async function postSignUp(req, res, next) {
     return next(error);
   }
 }
+
 module.exports = router;
