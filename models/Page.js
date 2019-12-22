@@ -1,4 +1,4 @@
-const { mongoose, defindHook } = require('../services/MongoService');
+const { mongoose, declareHook } = require('../services/MongoService');
 
 var Schema = mongoose.Schema;
 var schema = new Schema({
@@ -22,7 +22,7 @@ var schema = new Schema({
   created: { type: Date, default: Date.now() }
 });
 
-defindHook(schema, 'Page');
+declareHook(schema, 'Page');
 
 const Page = mongoose.model('Page', schema);
 

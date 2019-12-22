@@ -81,6 +81,8 @@ async function unSubscriedApp(pageId, access_token) {
   }
 }
 
+async function crawCustomer() {}
+
 module.exports = {
   getUserInfo,
   getLongLiveToken,

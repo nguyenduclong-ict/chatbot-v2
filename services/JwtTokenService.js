@@ -1,20 +1,19 @@
 const jwt = require('jsonwebtoken');
-const jwt_secret = process.env.JWT_SECRET || 'longnd';
-var tokenExpires = Number(process.env.TOKEN_EXPIRES) || 3600;
+const { JWT_SECRET, TOKEN_EXPIRES } = require('../config').jwt;
 /**
  * Get Login info from token
  * @param {any} payload Data to sign
  */
 function sign(payload) {
-  payload.expriesAt = Date.now() + tokenExpires * 1000;
-  let options = { expiresIn: tokenExpires };
+  payload.expriesAt = Date.now() + TOKEN_EXPIRES * 1000;
+  let options = { expiresIn: TOKEN_EXPIRES };
   if (typeof payload === 'string') {
     options = {};
   }
   return {
-    token: jwt.sign(payload, jwt_secret),
+    token: jwt.sign(payload, JWT_SECRET),
     expriesAt: payload.expriesAt,
-    expiresIn: tokenExpires * 1000
+    expiresIn: TOKEN_EXPIRES * 1000
   };
 }
 
@@ -25,7 +24,7 @@ function sign(payload) {
 function verify(token) {
   console.log(token);
 
-  return jwt.verify(token, jwt_secret);
+  return jwt.verify(token, JWT_SECRET);
 }
 
 module.exports = { jwt, sign, verify };

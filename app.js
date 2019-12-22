@@ -1,9 +1,16 @@
 require('./utils/extras');
 require('./utils/firebase');
 require('./utils/queue');
+require('./services/TokenServices');
+const { env } = require('./config');
 // setup global variable
 global.__dirroot = __dirname;
 Error.createError = require('./services/CustomError').createError;
+Object.keys(env).forEach(key => {
+  process.env[key] = env[key]; // merge env config
+});
+
+// import library
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -11,9 +18,9 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const cors = require('cors');
 const { initRouter } = require('./utils/router');
-var app = express();
 
 // view engine setup
+var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(cors());
@@ -23,7 +30,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// app.use('/', indexRouter);
+// init router
 const router = initRouter(
   path.join(__dirname, 'routes'),
   path.join(__dirname, 'middlewares'),
@@ -36,8 +43,8 @@ app.use(router);
 app.use(function(req, res, next) {
   next(createError(404));
 });
-
 app.use(handleError);
+
 /**
  * Recived Event
  * @param {Error} err

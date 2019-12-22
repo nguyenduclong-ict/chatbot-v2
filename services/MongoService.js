@@ -8,7 +8,9 @@ mongoose.set('useFindAndModify', false);
  *
  */
 
-function defindHook(schema, schemaName = '') {
+function declareHook(schema, schemaName = '') {
+  if (process.env.NODE_ENV === 'production') return;
+  // pre updateOne
   schema.pre('updateOne', function(next) {
     _log(
       `{${schemaName}} pre updateOne`,
@@ -19,6 +21,7 @@ function defindHook(schema, schemaName = '') {
     );
     next();
   });
+  // pre updateMany
   schema.pre('updateMany', function(next) {
     _log(
       `{${schemaName}} pre updateMany`,
@@ -29,6 +32,7 @@ function defindHook(schema, schemaName = '') {
     );
     next();
   });
+  // pre save
   schema.pre('save', function(next) {
     _log(`{${schemaName}} pre save: \n`, this.toObject());
     next();
@@ -61,4 +65,4 @@ async function connectDatabase(params) {
   });
 }
 
-module.exports = { mongoose, connectDatabase, defindHook };
+module.exports = { mongoose, connectDatabase, declareHook };

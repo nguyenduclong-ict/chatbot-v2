@@ -7,8 +7,6 @@
 var app = require('../app');
 var debug = require('debug')('webhook:server');
 var http = require('http');
-const TokenService = require('../services/TokenServices');
-TokenService.readFromFile('config/tokens.json');
 /**
  * Get port from environment and store in Express.
  */
@@ -31,20 +29,11 @@ server.listen(port, () => {
 });
 server.on('error', onError);
 server.on('listening', onListening);
-server.on('close', onCloseServer);
 
 // Graceful stop
 process.on('SIGINT', () => {
   server.close();
 });
-/**
- * On Server Close
- */
-function onCloseServer() {
-  console.log('\nSaving token list ...');
-  TokenService.writeToFile('config/tokens.json');
-  console.log('Server close');
-}
 
 /**
  * Normalize a port into a number, string, or false.
