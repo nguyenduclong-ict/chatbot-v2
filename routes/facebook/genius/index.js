@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var admin = require('firebase-admin');
+const APP_NAME = 'genius';
 const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _get(
   require(__dirroot + '/config'),
   'facebook/genius'
@@ -62,14 +63,4 @@ router.get('/webhook', (req, res) => {
   }
 });
 
-//
-router.post('/mrcom/order-notification', (req, res) => {
-  const { PAGE_ID } = _get(
-    require(__dirroot + '/config'),
-    'facebook/genius/pages/jarvis'
-  );
-  const page = pages.find(p => p.instance.PAGE_ID === PAGE_ID);
-  page.instance.handleNotificationOrder(req, res);
-  res.sendStatus(200);
-});
 module.exports = router;

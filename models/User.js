@@ -1,8 +1,12 @@
 const { mongoose } = require('../services/MongoService');
 const validator = require('validator');
-const UserInfo = require('./UserInfo');
 const UserRole = require('./UserRole')._instance;
 var Schema = mongoose.Schema;
+const { omitBy } = require('lodash');
+/**
+ * Defind model
+ */
+
 var schema = new Schema({
   password: String,
   username: {
@@ -26,11 +30,17 @@ var schema = new Schema({
       ref: 'UserRole'
     }
   ],
-  info: {
-    type: Schema.Types.ObjectId,
-    ref: 'UserInfo',
-    required: false
+  name: String,
+  address: String,
+  phone: {
+    type: String,
+    validate: {
+      validator: v => {
+        return validator.isMobilePhone(v);
+      }
+    }
   },
+  facebook_accounts: [{ type: Schema.Types.Map }],
   is_block: {
     type: Boolean,
     default: true,
@@ -45,7 +55,17 @@ var User = mongoose.model('User', schema);
  *
  * @param {{email, password, info, role, username }} param0
  */
-async function addUser({ email, password, info, roles, username }) {
+
+async function addUser({
+  email,
+  password,
+  name,
+  facebook_accounts,
+  address,
+  phone,
+  roles,
+  username
+}) {
   try {
     // check user roles
     let isBlock = false;
@@ -59,21 +79,26 @@ async function addUser({ email, password, info, roles, username }) {
     const data = {
       username,
       password,
+      name,
+      address,
+      phone,
+      facebook_accounts,
       is_block: isBlock,
       roles: docs.map(r => r._id)
     };
     if (email) data.email = email;
     let user = new User(data);
     // add user info
-    if (info) {
-      let userInfo = await UserInfo.addUserInfo(info);
-      user.info = userInfo._id;
-    }
     return user.save();
   } catch (error) {
     _log('add user error', error);
   }
 }
+
+/**
+ * Get User Info
+ * @param {*} param0
+ */
 
 async function getUser({ _id, email, username }) {
   let query = {};
@@ -82,31 +107,39 @@ async function getUser({ _id, email, username }) {
   if (username) query.username = username;
   if (query === {}) return null;
   let user = await User.findOne(query)
-    .populate('info')
     .populate('roles')
     .lean();
-  user.role = user.roles.map(e => e.value);
+  if (user) user.roles = user.roles.map(e => e.value);
   return user;
 }
 
-async function updateUser(_id, { role, isBlock, password, info }) {
+/**
+ * Update user
+ * @param {*} _id user id
+ * @param {*} param1
+ */
+async function updateUser(_id, data) {
   let user = await User.findById(_id);
-  let update = [];
   if (!user) return false;
-  if (password) user.password = password;
-  if (isBlock) user.is_block = isBlock;
-  if (roles) user.roles = roles;
+  data = _omit(data, [null, undefined]);
+  const facebook_accounts = data.facebook_accounts || [];
+  user['facebook_accounts'] = user['facebook_accounts'] || [];
+  facebook_accounts.forEach(e => {
+    let index = user['facebook_accounts'].findIndex(f => f.get('id') === e.id);
+    _log(index);
+    if (index >= 0) {
+      user['facebook_accounts'][index] = e;
+    } else {
+      user['facebook_accounts'].push(e);
+    }
+  });
+  Object.keys(data).forEach(key => {
+    if (key !== 'facebook_accounts') {
+      user[key] = data[key];
+    }
+  });
   // Update User Info
-  if (info) {
-    if (user.info) update.push(UserInfo.updateUserInfo(user.info, info));
-    else
-      await UserInfo.addUserInfo(info).then(doc => {
-        user.info = doc._id;
-      });
-  }
-  update.push(user.update());
-  let result = await Promise.all(update);
-  return result;
+  return User.updateOne({ _id: user._id }, user.toObject());
 }
 
 module.exports = { model: User, addUser, updateUser, getUser };

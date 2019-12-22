@@ -3,14 +3,13 @@ const queue = require('./queue');
 module.exports = {
   config: {
     PAGE_ACCESS_TOKEN: '',
-    APP_SECRET: '',
     SERVER_URL: process.env.HOST || 'localhost:' + process.env.PORT,
     VERSION: 'v5.0'
   },
   api: 'https://graph.facebook.com/v5.0',
   /**
    *
-   * @param {*} config PAGE_ACCESS_TOKEN, APP_SECRET, SERVER_URL
+   * @param {*} config PAGE_ACCESS_TOKEN, SERVER_URL
    */
   init(config) {
     this.config = { ...this.config, ...config };

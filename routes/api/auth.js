@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
 
-const { createError } = require('../../services/CustomError');
 // models
 var User = require('../../models/User');
 // bcrypt
@@ -13,18 +12,27 @@ const jwt = require('../../services/JwtTokenService');
 const tokenService = require('../../services/TokenServices');
 // auth
 const auth = require('../../services/AuthSerivce');
-
+const Page = require('../../models/Page').model;
+const { listPageOfUser } = require('../../providers/PageProvider');
 // Route
-router.get('/user', auth.getUserInfo, getUserInfo);
+router.get('/me', auth.getUserInfo, getUserInfo);
 router.post('/login', postLogIn);
+router.post('/logout', auth.getUserInfo, postLogout);
 router.post('/signup', postSignUp);
 router.get('/refresh-token', auth.getUserInfo, getRefreshToken);
-
+router.all('/facebook', (req, res) => {
+  console.log(req.query, req.body);
+});
 // Function
-async function getUserInfo(req, res) {
-  console.log(req.user);
-  delete req.user.password;
-  return res.json(req.user || {});
+async function getUserInfo(req, res, next) {
+  if (req.user) {
+    const pages = await listPageOfUser(req.user._id);
+    delete req.user.password;
+    req.user.pages = pages;
+    return res.json({ user: req.user });
+  } else {
+    next(Error.Error.createError('Bạn chưa đăng nhập', 401));
+  }
 }
 
 async function getRefreshToken(req, res, next) {
@@ -49,7 +57,8 @@ async function postLogIn(req, res, next) {
 
   try {
     if (user) {
-      if (user.is_block) throw createError('Account is blocked', 401);
+      if (user.is_block)
+        throw Error.createError('Tài khoản hiện đang bị khóa ', 401);
       // Check password
       let same = bcrypt.compareSync(password, user.password);
       console.log(same);
@@ -74,18 +83,19 @@ async function postLogIn(req, res, next) {
           imgCode
         };
         tokenService.addToken(token);
+
         return res.json(result);
       } else {
         // Password not match
-        throw createError('Password not match', 401);
+        throw Error.createError('Tài khoản hoặc mật khẩu không chính xác', 401);
       }
     } else {
       // Không tồn tại user
-      throw createError('Account not exits', 401);
+      throw Error.createError('Tài khoản không tồn tại', 401);
     }
   } catch (error) {
     // MError handle
-    return next(error);
+    next(error);
   }
 }
 
@@ -99,6 +109,12 @@ async function postSignUp(req, res, next) {
     // MError handle
     return next(error);
   }
+}
+
+function postLogout(req, res) {
+  console.log(req.token);
+  tokenService.removeToken(req.token);
+  res.sendStatus(200);
 }
 
 module.exports = router;

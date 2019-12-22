@@ -1,3 +1,5 @@
+const TokenService = require('../services/TokenServices');
+const User = require('../models/User');
 module.exports = async function(req, res, next) {
   // get token from header
   // Check token on token list

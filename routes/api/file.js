@@ -6,9 +6,9 @@ const jwt = require('../../services/JwtTokenService');
 const User = require('../../models/User');
 const jimp = require('jimp');
 const fs = require('fs');
-const rootPath = process.env.ROOT_PATH;
+const rootPath = process.env.ROOT_PATH || __dirroot;
 const path = require('path');
-
+const { createError } = require('../../services/CustomError');
 // Route
 router.get('/', getFile);
 router.get('/info', auth.getUserInfo, getFileInfo);
@@ -22,9 +22,12 @@ async function getFile(req, res, next) {
     if (!file) return next(Error.createError('File not found', 404));
     if (!file.isPublic) {
       // Kiem tra xem co quyen xem file khong
-      let userId = jwt.verify(imgCode);
-      if (userId != file.owner)
-        return next(Error.createError('You cannot access to file', 403));
+      let userId;
+      if (imgCode) {
+        userId = jwt.verify(imgCode);
+      }
+      if (!userId || userId != file.owner)
+        return next(createError('You cannot access to file', 403));
     }
     let filePath = path.join(rootPath, file.path, file.filename);
     // Send file to client
@@ -83,6 +86,14 @@ async function putUpdateFile(req, res, next) {
   }
 }
 
+/**
+ *
+ * @param {*} file
+ * @param {*} query
+ * size=wxh,
+ * crop=top,left,width,height
+ * scale=
+ */
 async function processImage(file, query) {
   console.log('send image to client');
   let { size, crop, scale } = query;
@@ -93,8 +104,8 @@ async function processImage(file, query) {
 
   // Resize
   if (size) {
-    w = Number(size.split('x')[0]);
-    h = Number(size.split('x')[1]);
+    w = Number(size.split('x')[0] || 50);
+    h = Number(size.split('x')[1] || 50);
     image.resize(w, h);
   }
 

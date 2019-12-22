@@ -1,17 +1,18 @@
 const mongoose = require('mongoose');
 mongoose.set('useCreateIndex', true);
+mongoose.set('useFindAndModify', false);
 
 async function connectDatabase(params) {
   // make db connect
   const { host, user, pass, dbName, port } = require('../config').mongodb;
   let uri = `mongodb://${host}:${port}/${dbName}`;
-  const options = {
+  let options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     user,
     pass
   };
-
+  options = params || options;
   // Connect mongoose
 
   return new Promise((resolve, reject) => {

@@ -23,6 +23,8 @@ function sign(payload) {
  * @param  {string} token Token of user
  */
 function verify(token) {
+  console.log(token);
+
   return jwt.verify(token, jwt_secret);
 }
 

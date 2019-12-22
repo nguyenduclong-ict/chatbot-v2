@@ -3,18 +3,20 @@ require('./utils/firebase');
 require('./utils/queue');
 // setup global variable
 global.__dirroot = __dirname;
+Error.createError = require('./services/CustomError').createError;
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const cors = require('cors');
 const { initRouter } = require('./utils/router');
 var app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
+app.use(cors());
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

@@ -1,5 +1,5 @@
 const path = require('path');
-
+global._ = require('lodash');
 /**
  *
  * @param {string} url url
@@ -96,3 +96,11 @@ function set(obj, keys, value) {
   return obj;
 }
 global._set = set;
+
+global._omit = function(data = {}, omitValue = []) {
+  this.Object.keys(data).forEach(key => {
+    if (omitValue.includes(data[key])) delete data[key];
+  });
+  if (Array.isArray(data)) return data.filter(e => !!e);
+  return data;
+};

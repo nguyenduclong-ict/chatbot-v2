@@ -9,8 +9,8 @@ router.middlewares = ['get-user-info'];
 // Setup multer
 const multer = require('multer');
 const path = require('path');
-const uploadPath = process.env.UPLOAD_PATH;
-const rootPath = process.env.ROOT_PATH;
+const uploadPath = process.env.UPLOAD_PATH || 'upload';
+const rootPath = process.env.ROOT_PATH || __dirroot;
 const MIME_TYPE_MAP = {
   'image/png': 'png',
   'image/jpeg': 'jpg',
@@ -19,15 +19,27 @@ const MIME_TYPE_MAP = {
 // Storage
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    let dir = uploadPath;
-    if (req.user) dir = `${uploadPath}/${req.user.email}`;
-    else dir = `${uploadPath}/anonymus`;
-    if (!fs.existsSync(path.join(rootPath, dir))) {
-      console.log('Create Folder ...', path.join(rootPath, dir));
-      fs.mkdirSync(path.join(rootPath, dir));
+    const arr = [uploadPath];
+    // Prepare upload dir
+    if (req.user) {
+      const now = new Date();
+      const userPath = req.user.username || req.user.email;
+      const timePath = `${now.getFullYear()}-${now.getMonth() + 1}`;
+      arr.push('private', userPath, timePath);
+    } else {
+      arr.push('anonymus');
     }
-
-    cb(null, dir);
+    let uPath = '';
+    arr.forEach(e => {
+      uPath = path.join(uPath, e);
+      const pp = path.join(rootPath, uPath);
+      if (!fs.existsSync(pp)) {
+        fs.mkdirSync(pp, '774');
+        console.log('Created folder ...', path.join(pp));
+      }
+    });
+    _log(uPath);
+    cb(null, uPath);
   },
   filename: (req, file, cb) => {
     if (!MIME_TYPE_MAP[file.mimetype])
@@ -49,6 +61,7 @@ var storage = multer.diskStorage({
     }
   }
 });
+
 // Init upload
 var upload = multer({
   storage: storage
@@ -63,7 +76,6 @@ async function postUploadFiles(req, res) {
   try {
     let { subOwner = [], tags = [], isPublic = true } = req.body;
     req.files.forEach(async (element, i) => {
-      console.log(element);
       let filename = element.filename;
       let filepath = element.destination;
       let filetype = element.mimetype.split('/')[0];
@@ -73,7 +85,7 @@ async function postUploadFiles(req, res) {
         filename: filename,
         path: filepath,
         filetype: filetype,
-        public: isPublic,
+        isPublic: isPublic,
         tags: tags
       };
 
