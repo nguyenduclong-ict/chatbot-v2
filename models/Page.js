@@ -1,5 +1,4 @@
-const { mongoose } = require('../services/MongoService');
-const validator = require('validator');
+const { mongoose, defindHook } = require('../services/MongoService');
 
 var Schema = mongoose.Schema;
 var schema = new Schema({
@@ -15,12 +14,16 @@ var schema = new Schema({
     ref: 'User'
   }, // user id ref
   picture: String,
+  link: String,
+  hidden: { type: Boolean, default: false },
   token_expired: { type: Date, default: Date.now() },
   subscribed_fields: [{ type: String }],
   user_facebook_id: String, // map to user info
   created: { type: Date, default: Date.now() }
 });
 
-var Page = mongoose.model('Page', schema);
+defindHook(schema, 'Page');
+
+const Page = mongoose.model('Page', schema);
 
 module.exports = Page;

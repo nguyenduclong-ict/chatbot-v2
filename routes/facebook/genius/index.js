@@ -2,10 +2,18 @@ var express = require('express');
 var router = express.Router();
 var admin = require('firebase-admin');
 const APP_NAME = 'genius';
-const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _get(
-  require(__dirroot + '/config'),
-  'facebook/genius'
+const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _.get(
+  require(`${__dirroot}/config`),
+  ['facebook', APP_NAME],
+  {}
 );
+const fbSender = require(`${__dirroot}/utils/fbSender`);
+
+/**
+ * Routes
+ */
+
+router.post('/webhook', handleReciveEvent);
 
 /*
  * Be sure to setup your config values before running this code. You can
@@ -24,7 +32,15 @@ if (!(APP_SECRET && VERIFY_TOKEN && SERVER_URL)) {
  * https://developers.facebook.com/docs/messenger-platform/product-overview/setup#subscribe_app
  *
  */
-router.post('/webhook', function(req, res) {
+
+/**
+ * Recived Event
+ * @param {Request} req
+ * @param {Response<any>} res
+ * @param {NextFunction} next
+ */
+
+function handleReciveEvent(req, res, next) {
   _log('on recived event', req.body);
   res.sendStatus(200);
   // Make sure this is a page subscription
@@ -35,11 +51,14 @@ router.post('/webhook', function(req, res) {
     data.entry.forEach(function(pageEntry) {
       var pageID = pageEntry.id;
       var timeOfEvent = pageEntry.time;
-      const page = pages.find(p => p.instance.PAGE_ID === pageID);
-      if (page) pageEntry.messaging.forEach(page.instance.handleMessage);
+      // const pageInfo =
+      _log(pageEntry);
+      // pageEntry.messaging.forEach(message => {
+      //   console.log(message);
+      // });
     });
   }
-});
+}
 
 // Accepts GET requests at the /webhook endpoint
 router.get('/webhook', (req, res) => {

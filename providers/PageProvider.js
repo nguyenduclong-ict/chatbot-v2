@@ -6,21 +6,16 @@ function addPage(data) {
 }
 
 async function updatePage(conditions, data, create = false) {
-  let doc = await Page.findOne(conditions);
-  _log(conditions, data, doc);
-  if (doc) {
-    for (let key in data) doc[key] = data[key];
-    return Page.updateOne({ _id: doc._id }, data);
-  } else if (create) {
-    return addPage(data);
-  } else {
-    throw Error('Không tìm thấy Page');
-  }
+  return Page.updateOne(conditions, data, { upsert: create });
+}
+
+async function updateManyPage(conditions, data, create = false) {
+  return Page.updateMany(conditions, data, { upsert: create });
 }
 
 async function listPageOfUser(userId) {
-  let list = await Page.find({ user_id: userId }).lean();
+  let list = await Page.find({ user_id: userId, hidden: false }).lean();
   return list || [];
 }
 
-module.exports = { addPage, updatePage, listPageOfUser };
+module.exports = { addPage, updatePage, listPageOfUser, updateManyPage };

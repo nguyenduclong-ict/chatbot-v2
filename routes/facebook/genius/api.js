@@ -2,24 +2,23 @@ const router = require('express').Router();
 router.middlewares = ['get-user-info'];
 const { get } = require('lodash');
 const APP_NAME = 'genius';
-const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _get(
-  require(__dirroot + '/config'),
-  'facebook/' + APP_NAME
-);
+
 const moment = require('moment');
 const { updateUser } = require(__dirroot + '/models/User');
 const Page = require(__dirroot + '/models/Page');
-const { listPageOfUser, updatePage } = require(__dirroot +
+const { listPageOfUser, updatePage, updateManyPage } = require(__dirroot +
   '/providers/PageProvider');
 const {
   getUserInfo,
   getLongLiveToken,
-  subscribeApp
+  subscribeApp,
+  unSubscriedApp
 } = require('../../../utils/fb');
 
 // defined route
 router.post('/add-page', postAddPage);
 router.post('/active-page', postActivePage);
+router.post('/deactive-page', postDeActivePage);
 
 // functions
 async function postAddPage(req, res) {
@@ -51,20 +50,21 @@ async function postAddPage(req, res) {
 
     // save user to userinfo
     await updateUser(req.user._id, {
-      facebook_accounts: [fbAccount],
-      name: 'Nguyễn Đức Long'
+      facebook_accounts: [fbAccount]
     });
 
     // save list page to database
-    const list = get(data, ['accounts', 'data'], []);
-    const task = list.map(e => {
+    const list = get(data, ['accounts'], []);
+    // update danh sách page được cấp quyền
+    const tasks = list.map(e => {
       const pageData = {
         ...e,
         picture: get(e, 'picture.data.url', ''),
         user_id: req.user._id,
         user_facebook_id: id,
         type: 'facebook',
-        token_expired: expires_at
+        token_expired: expires_at,
+        hidden: false
       };
       return updatePage(
         { id: pageData.id, user_id: req.user._id },
@@ -72,8 +72,20 @@ async function postAddPage(req, res) {
         true
       );
     });
+    // update lại danh sách page đã thêm nhưng không được cấp quyền
+    tasks.push(
+      updateManyPage(
+        {
+          id: { $nin: list.map(e => e.id) },
+          user_id: req.user._id,
+          user_facebook_id: id
+        },
+        { hidden: true, subscribed_fields: [] },
+        false
+      )
+    );
 
-    await Promise.all(task);
+    await Promise.all(tasks);
     const litsPage = await listPageOfUser(req.user._id);
     return res.json(litsPage);
   } catch (error) {
@@ -92,10 +104,36 @@ async function postActivePage(req, res) {
         page.access_token,
         subscribed_fields
       );
+      // subscribed thành công
       if (result.success) {
         await updatePage(
           { id: page_id, user_id: req.user._id },
           { ...page.toObject(), subscribed_fields: result.subscribed_fields }
+        );
+        return res.json(result);
+      } else {
+        throw 'Xảy ra lỗi';
+      }
+    } else {
+      return Error.createError('Không tìm thấy Page', 404);
+    }
+  } catch (error) {
+    _log(error);
+    return Error.createError(error.message || 'Xảy ra lỗi', error.code || 500);
+  }
+}
+
+async function postDeActivePage(req, res) {
+  try {
+    const { page_id } = req.body;
+    const page = await Page.findOne({ id: page_id, user_id: req.user._id });
+    if (page) {
+      const result = await unSubscriedApp(page_id, page.access_token);
+      // unsubscribe thành công
+      if (result.success) {
+        await updatePage(
+          { id: page_id, user_id: req.user._id },
+          { ...page.toObject(), subscribed_fields: [] }
         );
         return res.json(result);
       } else {

@@ -2,16 +2,30 @@ const axios = require('axios').default;
 const graphUrl = 'https://graph.facebook.com/v5.0';
 const config = require('../config/index');
 
-async function getUserInfo(userId, access_token, fields) {
+async function getUserInfo(
+  userId,
+  access_token,
+  { userFields, accountsFields } = {}
+) {
   try {
-    fields =
-      fields || 'name,accounts{access_token,name,picture{url}},email,picture';
-    // const endPoint = graphUrl + '/' + userId;
+    userFields = userFields || 'name,email,picture';
+    accountsFields = accountsFields || 'name,picture,access_token,link';
     const endPoint = graphUrl + '/' + userId;
-    const response = await axios.get(endPoint, {
-      params: { access_token, fields, limit: 1000 }
-    });
-    return response.data;
+    const endPoint2 = graphUrl + '/' + userId + '/accounts';
+
+    const tasks = [];
+    tasks.push(
+      axios.get(endPoint, {
+        params: { access_token, fields: userFields, limit: 1000 }
+      })
+    );
+    tasks.push(
+      axios.get(endPoint2, {
+        params: { access_token, fields: accountsFields, limit: 1000 }
+      })
+    );
+    const [me, accounts] = await Promise.all(tasks);
+    return { ...me.data, accounts: accounts.data.data };
   } catch (error) {
     _log('Get User Info fail ', error.message);
     return null;
@@ -39,7 +53,11 @@ async function getLongLiveToken(appName, shortToken) {
 async function subscribeApp(pageId, access_token, subscribed_fields) {
   const endPoint = graphUrl + '/' + pageId + '/subscribed_apps';
   try {
-    subscribed_fields = subscribed_fields || ['feed', 'messages'];
+    subscribed_fields = subscribed_fields || [
+      'feed',
+      'messages',
+      'conversations'
+    ];
     const response = await axios.post(
       endPoint,
       { subscribed_fields },
@@ -52,4 +70,20 @@ async function subscribeApp(pageId, access_token, subscribed_fields) {
   }
 }
 
-module.exports = { getUserInfo, getLongLiveToken, subscribeApp };
+async function unSubscriedApp(pageId, access_token) {
+  const endPoint = graphUrl + '/' + pageId + '/subscribed_apps';
+  try {
+    const response = await axios.delete(endPoint, { params: { access_token } });
+    return { ...response.data };
+  } catch (error) {
+    _log('UnSubscribed App Error ', error.message);
+    return null;
+  }
+}
+
+module.exports = {
+  getUserInfo,
+  getLongLiveToken,
+  subscribeApp,
+  unSubscriedApp
+};

@@ -37,28 +37,40 @@ app.use(function(req, res, next) {
   next(createError(404));
 });
 
-// error handler
-app.use(function(err, req, res, next) {
+app.use(handleError);
+/**
+ * Recived Event
+ * @param {Error} err
+ * @param {express.request} req
+ * @param {express.response} res
+ * @param {NextFunction} next
+ */
+function handleError(err, req, res, next) {
   // set locals, only providing error in development
-  if (err) _log(err);
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  if (err) {
+    _log(err);
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  let isJson =
-    req.headers['content-type'] && req.headers['content-type'].includes('json');
+    let isJson =
+      req.headers['content-type'] &&
+      req.headers['content-type'].includes('json');
 
-  if (/\/webhook$/.test(req._parsedUrl.pathname)) {
-    _log('webhook error', err);
-    res.end();
+    if (/\/webhook$/.test(req._parsedUrl.pathname)) {
+      _log('webhook error', err);
+      res.destroy();
+    }
+    if (isJson) {
+      // render the error page
+      res.status(err.status || 500).send(err.data || err.message);
+    } else {
+      res.status(err.status || 500);
+      res.render('error');
+    }
   }
-  if (isJson) {
-    // render the error page
-    res.status(err.status || 500).send(err.data || err.message);
-  } else {
-    res.status(err.status || 500);
-    res.render('error');
-  }
-});
+}
+
+app.get('a', (req, res) => {});
 
 const { connectDatabase } = require('./services/MongoService');
 connectDatabase().then(() => {});
