@@ -1,4 +1,4 @@
-const { mongoose } = require('../services/MongoService');
+const { mongoose, declareHook } = require('../services/MongoService');
 const validator = require('validator');
 
 var Schema = mongoose.Schema;
@@ -17,15 +17,6 @@ var schema = new Schema({
 });
 
 var Tag = mongoose.model('Tag', schema);
-function addTag(data) {
-  let doc = new Tag(data);
-  return doc.save();
-}
+declareHook(schema, 'Tag');
 
-async function updateTag(_id, data) {
-  let doc = await Tag.findById(_id);
-  if (doc) for (let key of data) doc[key] = data[key];
-  return doc.update();
-}
-
-module.exports = { model: Tag, addTag, updateTag };
+module.exports = Tag;

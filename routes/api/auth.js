@@ -11,25 +11,23 @@ const salt = bcrypt.genSaltSync(saltRounds);
 const jwt = require('../../services/JwtTokenService');
 const tokenService = require('../../services/TokenServices');
 // auth
-const auth = require('../../services/AuthSerivce');
-const Page = require('../../models/Page').model;
+const getUserInfo = _md('get-user-info');
 const { listPageOfUser } = require('../../providers/PageProvider');
 // Route
-router.get('/me', auth.getUserInfo, getUserInfo);
+router.get('/me', getUserInfo, handleGetUserInfo);
 router.post('/login', postLogIn);
-router.post('/logout', auth.getUserInfo, postLogout);
+router.post('/logout', getUserInfo, postLogout);
 router.post('/signup', postSignUp);
-router.get('/refresh-token', auth.getUserInfo, getRefreshToken);
-router.all('/facebook', (req, res) => {
-  console.log(req.query, req.body);
-});
+router.get('/refresh-token', getUserInfo, getRefreshToken);
+
 // Function
-async function getUserInfo(req, res, next) {
+async function handleGetUserInfo(req, res, next) {
   if (req.user) {
     const pages = await listPageOfUser(req.user._id);
     delete req.user.password;
     req.user.pages = pages;
-    return res.json({ user: req.user });
+    let imgCode = jwt.sign(req.user._id.toString()).token;
+    return res.json({ user: { ...req.user, imgCode: imgCode } });
   } else {
     next(Error.Error.createError('Bạn chưa đăng nhập', 401));
   }
@@ -42,8 +40,8 @@ async function getRefreshToken(req, res, next) {
     let user = req.user;
     // Tao token moi cho user
     let payload = { email: user.email };
-    let { token, expiresIn, expriesAt } = jwt.sign(payload);
-    let result = { token, expiresIn, expriesAt, role: user.roles };
+    let { token } = jwt.sign(payload);
+    let result = { token };
     tokenService.addToken(token);
     return res.json(result);
   } catch (error) {
@@ -61,29 +59,20 @@ async function postLogIn(req, res, next) {
         throw Error.createError('Tài khoản hiện đang bị khóa ', 401);
       // Check password
       let same = bcrypt.compareSync(password, user.password);
-      console.log(same);
       if (same) {
-        // Login success
-        // Create Token for user
+        // Login success, Create Token for user
         let payload = {};
         if (user.email) {
           payload.email = user.email;
-        }
-        if (user.username) {
+        } else if (user.username) {
           payload.username = user.username;
         }
         _log(payload);
-        let { token, expiresIn, expriesAt } = jwt.sign(payload);
-        let imgCode = jwt.sign(user._id.toString()).token;
+        let { token } = jwt.sign(payload);
         let result = {
-          token,
-          expiresIn,
-          expriesAt,
-          roles: user.roles,
-          imgCode
+          token
         };
         tokenService.addToken(token);
-
         return res.json(result);
       } else {
         // Password not match
@@ -99,6 +88,13 @@ async function postLogIn(req, res, next) {
   }
 }
 
+/**
+ * SignUp
+ * @param {express.request} req
+ * @param {express.response} res
+ * @param {any} next
+ */
+
 async function postSignUp(req, res, next) {
   let { email, password, username, info, roles } = req.body;
   password = bcrypt.hashSync(password, salt);
@@ -111,8 +107,14 @@ async function postSignUp(req, res, next) {
   }
 }
 
+/**
+ * Logout
+ * @param {express.request} req
+ * @param {express.response} res
+ * @param {any} next
+ */
+
 function postLogout(req, res) {
-  console.log(req.token);
   tokenService.removeToken(req.token);
   res.sendStatus(200);
 }

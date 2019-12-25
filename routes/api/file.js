@@ -14,20 +14,21 @@ router.get('/', getFile);
 router.get('/info', auth.getUserInfo, getFileInfo);
 router.put('/update', auth.getUserInfo, putUpdateFile);
 
-// Functions
+/**
+ * Logout
+ * @param {express.request} req
+ * @param {express.response} res
+ * @param {NextFuction} next
+ */
 async function getFile(req, res, next) {
   try {
     let { filename, imgCode } = req.query;
-    let file = await File.model.findOne({ filename: filename });
+    const userId = jwt.verify(imgCode);
+    let file = await File.findOne({ filename });
     if (!file) return next(Error.createError('File not found', 404));
-    if (!file.isPublic) {
-      // Kiem tra xem co quyen xem file khong
-      let userId;
-      if (imgCode) {
-        userId = jwt.verify(imgCode);
-      }
-      if (!userId || userId != file.owner)
-        return next(createError('You cannot access to file', 403));
+    // Check permission access to file
+    if (!file.isPublic && userId != file.owner) {
+      return next(createError('You cannot access to file', 403));
     }
     let filePath = path.join(rootPath, file.path, file.filename);
     // Send file to client
@@ -48,7 +49,7 @@ async function getFileInfo(req, res, next) {
   try {
     let user = req.user;
     let { filename } = req.query;
-    let file = await File.model.findOne({ filename: filename });
+    let file = await File.findOne({ filename: filename });
     if (file.isPublic) return res.json(file);
     else {
       if (!user) return next(Error.createError("You can't access file", 403));
@@ -64,7 +65,7 @@ async function putUpdateFile(req, res, next) {
   try {
     let user = req.user;
     let { filename, subOwner, tags } = req.body;
-    let file = await File.model.findOne({ filename: filename });
+    let file = await File.findOne({ filename: filename });
 
     if (file.owner != null) {
       if (!user || user._id != file.owner)
@@ -117,8 +118,6 @@ async function processImage(file, query) {
     let cHeight = Number(crop.split(',')[3]);
     if (left + cWidth > w) cWidth = w - left;
     if (top + cHeight > h) cHeight = h - top;
-    console.log(w, h);
-    console.log(cWidth, cHeight);
     image.crop(top, left, cWidth, cHeight);
   }
 

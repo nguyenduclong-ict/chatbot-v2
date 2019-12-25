@@ -20,6 +20,7 @@ function initRouter(
   const middlewares = importAll(path.join(middlewarePath, '../middleware'));
   routes.forEach(route => {
     route.path = `/${route.name}`;
+
     // get middleware
     const names = route.instance.middlewares || [];
     globalMiddlewares.forEach(item => {

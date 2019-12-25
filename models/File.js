@@ -1,21 +1,20 @@
-const { mongoose } = require("../services/MongoService");
-const validator = require("validator");
-
+const { mongoose } = require('../services/MongoService');
+const { declareHook } = require(__dirroot + '/services/MongoService');
 var Schema = mongoose.Schema;
 var schema = new Schema({
   filename: {
     type: String,
-    default: "",
+    default: '',
     required: true
   },
   path: {
     type: String,
-    default: "",
+    default: '',
     required: true
   },
   owner: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: 'User',
     required: false
   },
   subOwner: [
@@ -24,16 +23,17 @@ var schema = new Schema({
       default: []
     }
   ],
-  filetype: { type: String, default: "" },
+  filetype: { type: String, default: '' },
   tags: [{ type: String, default: [] }],
   isPublic: {
     type: Boolean,
-    default: true,  
+    default: true,
     required: true
   },
   created: { type: Date, default: Date.now() }
 });
 
-var File = mongoose.model("File", schema);
+declareHook(schema, 'File');
 
-module.exports = { model: File };
+var File = mongoose.model('File', schema);
+module.exports = File;

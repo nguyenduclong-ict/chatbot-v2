@@ -1,16 +1,18 @@
-require('./utils/extras');
-require('./utils/firebase');
-require('./utils/queue');
-require('./services/TokenServices');
-const { env } = require('./config');
 // setup global variable
 global.__dirroot = __dirname;
 Error.createError = require('./services/CustomError').createError;
+const { env } = require('./config');
 Object.keys(env).forEach(key => {
   process.env[key] = env[key]; // merge env config
 });
 
 // import library
+require('./utils/extras');
+require('./utils/firebase');
+require('./utils/queue');
+require('./services/TokenServices');
+
+//
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -19,8 +21,9 @@ var logger = require('morgan');
 const cors = require('cors');
 const { initRouter } = require('./utils/router');
 
-// view engine setup
 var app = express();
+
+// view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(cors());
@@ -77,9 +80,8 @@ function handleError(err, req, res, next) {
   }
 }
 
-app.get('a', (req, res) => {});
-
 const { connectDatabase } = require('./services/MongoService');
+const Customer = require('./models/Customer');
 connectDatabase().then(() => {});
 
 module.exports = app;

@@ -1,10 +1,12 @@
 const path = require('path');
 global._ = require('lodash');
+
 /**
  *
  * @param {string} url url
  * @param {object} parameters query parameters
  */
+
 module.exports.makeURL = (url, parameters) => {
   const query = Object.entries(parameters)
     .map(([key, value]) => `${key}=${value}`)
@@ -97,10 +99,46 @@ function set(obj, keys, value) {
 }
 global._set = set;
 
-global._omit = function(data = {}, omitValue = []) {
+/**
+ * Omit
+ */
+global._omit = _omit;
+function _omit(data = {}, omitValue = [null, undefined]) {
   this.Object.keys(data).forEach(key => {
     if (omitValue.includes(data[key])) delete data[key];
   });
   if (Array.isArray(data)) return data.filter(e => !!e);
   return data;
+}
+
+// import quick middleware
+global._md = _md;
+/**
+ *
+ * @param {string} name name of middleware
+ */
+function _md(name) {
+  return require(path.join(__dirroot, 'middleware', name));
+}
+
+global._rq = function _rq(p) {
+  return require(path.join(__dirroot, p));
 };
+
+global._clean = function(obj, fields = []) {
+  if (typeof fields === 'string') fields = fields.split(',');
+  if (!Array.isArray(fields)) {
+    return obj;
+  } else {
+    return Object.fromEntries(
+      Object.entries(obj).filter(item => !fields.includes(item[0]))
+    );
+  }
+};
+
+// Regex function for search functionality
+const escapeRegex = (string = '') => {
+  return string.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+};
+
+global._escapeRegex = escapeRegex;

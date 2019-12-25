@@ -1,12 +1,13 @@
-var express = require('express');
-var router = express.Router();
-var admin = require('firebase-admin');
+const router = require('express').Router();
+/** @type {SocketIO.Server} */
+const io = require(`${__dirroot}/services/Socket.IO`);
 const APP_NAME = 'genius';
 const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _.get(
   require(`${__dirroot}/config`),
   ['facebook', APP_NAME],
   {}
 );
+const queue = require(`${__dirroot}/utils/queue`);
 const fbSender = require(`${__dirroot}/utils/fbSender`);
 
 /**
@@ -14,6 +15,7 @@ const fbSender = require(`${__dirroot}/utils/fbSender`);
  */
 
 router.post('/webhook', handleReciveEvent);
+router.get('/webhook', handleWeehookVerify);
 
 /*
  * Be sure to setup your config values before running this code. You can
@@ -61,7 +63,14 @@ function handleReciveEvent(req, res, next) {
 }
 
 // Accepts GET requests at the /webhook endpoint
-router.get('/webhook', (req, res) => {
+
+/**
+ *
+ * @param {express.request} req
+ * @param {express.response} res
+ */
+
+function handleWeehookVerify(req, res) {
   let mode = req.query['hub.mode'];
   let token = req.query['hub.verify_token'];
   let challenge = req.query['hub.challenge'];
@@ -80,6 +89,6 @@ router.get('/webhook', (req, res) => {
   } else {
     res.sendStatus(403);
   }
-});
+}
 
 module.exports = router;

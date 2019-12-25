@@ -1,19 +1,17 @@
 const router = require('express').Router();
-router.middlewares = ['get-user-info'];
 const { get } = require('lodash');
 const APP_NAME = 'genius';
 
 const moment = require('moment');
-const { updateUser } = require(__dirroot + '/models/User');
-const Page = require(__dirroot + '/models/Page');
-const { listPageOfUser, updatePage, updateManyPage } = require(__dirroot +
-  '/providers/PageProvider');
-const {
-  getUserInfo,
-  getLongLiveToken,
-  subscribeApp,
-  unSubscriedApp
-} = require('../../../utils/fb');
+const { updateUser } = _rq('/models/User');
+const Page = _rq('/models/Page');
+const { updatePage, updateManyPage } = _rq('/providers/PageProvider');
+const { getUserInfo, getLongLiveToken, subscribeApp, unSubscriedApp } = _rq(
+  '/utils/fb'
+);
+
+// defind middleware for current route
+router.middlewares = ['get-user-info'];
 
 // defined route
 router.post('/add-page', postAddPage);
@@ -86,8 +84,7 @@ async function postAddPage(req, res) {
     );
 
     await Promise.all(tasks);
-    const litsPage = await listPageOfUser(req.user._id);
-    return res.json(litsPage);
+    return res.json({ success: true });
   } catch (error) {
     console.log(error);
     return Error.createError(error.message, 500);
@@ -108,7 +105,11 @@ async function postActivePage(req, res) {
       if (result.success) {
         await updatePage(
           { id: page_id, user_id: req.user._id },
-          { ...page.toObject(), subscribed_fields: result.subscribed_fields }
+          {
+            ...page.toObject(),
+            subscribed_fields: result.subscribed_fields,
+            is_active: true
+          }
         );
         return res.json(result);
       } else {
@@ -133,7 +134,7 @@ async function postDeActivePage(req, res) {
       if (result.success) {
         await updatePage(
           { id: page_id, user_id: req.user._id },
-          { ...page.toObject(), subscribed_fields: [] }
+          { ...page.toObject(), subscribed_fields: [], is_active: false }
         );
         return res.json(result);
       } else {

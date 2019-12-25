@@ -35,7 +35,7 @@ module.exports = {
     const params = {
       access_token: this.config.PAGE_ACCESS_TOKEN
     };
-    queue.create('postfacebookapi', { url, data, params }).save();
+    let a = queue.create('postfacebookapi', { url, data, params }).save();
   },
 
   /**

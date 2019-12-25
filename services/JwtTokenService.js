@@ -5,16 +5,19 @@ const { JWT_SECRET, TOKEN_EXPIRES } = require('../config').jwt;
  * @param {any} payload Data to sign
  */
 function sign(payload) {
-  payload.expriesAt = Date.now() + TOKEN_EXPIRES * 1000;
-  let options = { expiresIn: TOKEN_EXPIRES };
-  if (typeof payload === 'string') {
-    options = {};
+  try {
+    let options = { expiresIn: TOKEN_EXPIRES };
+    if (typeof payload === 'string') {
+      options = {};
+    }
+    return {
+      token: jwt.sign(payload, JWT_SECRET, options),
+      token_expires_in: TOKEN_EXPIRES
+    };
+  } catch (error) {
+    _log(error);
+    throw Error.createError(error.message, error.code || 500);
   }
-  return {
-    token: jwt.sign(payload, JWT_SECRET),
-    expriesAt: payload.expriesAt,
-    expiresIn: TOKEN_EXPIRES * 1000
-  };
 }
 
 /**
@@ -22,9 +25,19 @@ function sign(payload) {
  * @param  {string} token Token of user
  */
 function verify(token) {
-  console.log(token);
-
-  return jwt.verify(token, JWT_SECRET);
+  try {
+    return {
+      ...jwt.verify(token, JWT_SECRET),
+      expiresIn: TOKEN_EXPIRES
+    };
+  } catch (error) {
+    _log(error);
+    if (error.name === 'TokenExpiredError') {
+      throw Error.createError('Token hết hạn, vui lòng đăng nhập lại', 401);
+    } else {
+      throw Error.createError(error.message, error.code || 500);
+    }
+  }
 }
 
 module.exports = { jwt, sign, verify };

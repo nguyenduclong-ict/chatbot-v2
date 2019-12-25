@@ -7,6 +7,8 @@
 var app = require('../app');
 var debug = require('debug')('webhook:server');
 var http = require('http');
+const { initSocketIO } = require('../services/Socket.IO');
+
 /**
  * Get port from environment and store in Express.
  */
@@ -19,6 +21,11 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+
+/**
+ * Init SocketIO server
+ */
+initSocketIO(server);
 
 /**
  * Listen on provided port, on all network interfaces.

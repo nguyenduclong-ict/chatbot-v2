@@ -100,11 +100,8 @@ async function addUser({
  * @param {*} param0
  */
 
-async function getUser({ _id, email, username }) {
-  let query = {};
-  if (_id) query._id = _id;
-  if (email) query.email = email;
-  if (username) query.username = username;
+async function getUser(query) {
+  query = _omit(query, [null, undefined]);
   if (query === {}) return null;
   let user = await User.findOne(query)
     .populate('roles')

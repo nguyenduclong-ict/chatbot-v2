@@ -1,6 +1,6 @@
 const axios = require('axios').default;
-const graphUrl = 'https://graph.facebook.com/v5.0';
 const config = require('../config/index');
+const { graphUrl } = config.facebook;
 
 async function getUserInfo(
   userId,
@@ -80,8 +80,6 @@ async function unSubscriedApp(pageId, access_token) {
     return null;
   }
 }
-
-async function crawCustomer() {}
 
 module.exports = {
   getUserInfo,

@@ -13,7 +13,6 @@ function roles(roles = [], options = { type: 'and' | 'or' }) {
     if (!user) throw Error.createError('Cannot get user info from login', 401);
     for (let role of roles) {
       let index = user.role.indexOf(role);
-      console.log(options);
       // if role containt one
       if (options.type === 'or' && index > -1) {
         result = true;

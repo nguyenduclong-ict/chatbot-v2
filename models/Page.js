@@ -16,6 +16,7 @@ var schema = new Schema({
   picture: String,
   link: String,
   hidden: { type: Boolean, default: false },
+  is_active: { type: Boolean, default: false },
   token_expired: { type: Date, default: Date.now() },
   subscribed_fields: [{ type: String }],
   user_facebook_id: String, // map to user info
@@ -23,7 +24,5 @@ var schema = new Schema({
 });
 
 declareHook(schema, 'Page');
-
 const Page = mongoose.model('Page', schema);
-
 module.exports = Page;

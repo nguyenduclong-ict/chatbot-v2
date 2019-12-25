@@ -1,5 +1,6 @@
 module.exports = {
   facebook: {
+    graphUrl: 'https://graph.facebook.com/v5.0',
     genius: {
       VERIFY_TOKEN: 'longnd',
       APP_SECRET: 'f63e4265769ac4b25ebd6abe95c73f01',
@@ -15,7 +16,7 @@ module.exports = {
     pass: 'long@123'
   },
   env: {
-    NODE_ENV: 'production' // | development
+    NODE_ENV: 'development' // | development || production
   },
   token: {
     driver: 'redis', // | none
@@ -26,6 +27,6 @@ module.exports = {
   },
   jwt: {
     JWT_SECRET: 'longnd',
-    TOKEN_EXPIRES: 3600 // seconds
+    TOKEN_EXPIRES: 5184000 // 60 day
   }
 };
