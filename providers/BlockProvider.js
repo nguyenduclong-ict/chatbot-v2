@@ -1,5 +1,5 @@
-const Tag = require('../models/Tag');
+const Block = require('../models/Block');
 const { declareCRUD } = require('express-extra-tool').mongoose;
 module.exports = {
-  ...declareCRUD(Tag, 'Tag')
+  ...declareCRUD(Block, 'Block')
 };

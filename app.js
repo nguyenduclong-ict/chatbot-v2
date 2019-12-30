@@ -1,28 +1,29 @@
-// setup global variable
-global.__dirroot = __dirname;
-Error.createError = require('./services/CustomError').createError;
-const { env } = require('./config');
-Object.keys(env).forEach(key => {
-  process.env[key] = env[key]; // merge env config
+require('dotenv').config();
+const lodash = require('lodash');
+const extraTool = require('express-extra-tool');
+const config = require('./config');
+extraTool.initGlobal({
+  dirroot: __dirname,
+  additions: [{ name: '_', value: lodash }]
 });
 
-// import library
-require('./utils/extras');
-require('./utils/firebase');
-require('./utils/queue');
-require('./services/TokenServices');
-
-//
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const cors = require('cors');
-const { initRouter } = require('./utils/router');
-
 var app = express();
 
+// Init queue
+require('./services/Queue');
+// Connect database
+const { host, user, pass, dbName, port } = config.mongodb;
+extraTool.mongoose.connectDatabase({ host, dbName, port, user, pass });
+extraTool.jwt.initJWT({
+  secret: config.jwt.JWT_SECRET,
+  tokenExpires: config.jwt.TOKEN_EXPIRES
+});
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
@@ -34,12 +35,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // init router
-const router = initRouter(
-  path.join(__dirname, 'routes'),
-  path.join(__dirname, 'middlewares'),
-  /^_/gm,
-  []
-);
+const router = extraTool.initRouter();
 app.use(router);
 
 // catch 404 and forward to error handler
@@ -79,9 +75,5 @@ function handleError(err, req, res, next) {
     }
   }
 }
-
-const { connectDatabase } = require('./services/MongoService');
-const Customer = require('./models/Customer');
-connectDatabase().then(() => {});
 
 module.exports = app;

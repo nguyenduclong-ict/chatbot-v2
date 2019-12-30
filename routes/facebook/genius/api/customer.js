@@ -4,7 +4,7 @@ const Page = _rq('/models/Page');
 const Customer = _rq('/models/Customer');
 const { updateCustomer, getManyCustomer } = _rq('/providers/CustomerProvider');
 
-const queue = _rq('utils/queue');
+const queue = _rq('services/Queue');
 const { socketio } = _rq('services/Socket.IO.js');
 
 // defind middleware for current route
@@ -24,7 +24,7 @@ router.put('/update', handleUpdateManyCustomer);
 async function postCrawlCustomer(req, res, next) {
   const { pageId } = req.body;
   const page = await Page.findOne({ id: pageId, user_id: req.user._id }).lean();
-  if (!page) return next(Error.createError('Không tìm thấy page', 400));
+  if (!page) return next(_createError('Không tìm thấy page', 400));
   const params = {
     user_id: req.user._id,
     page_id_facebook: pageId,
@@ -56,20 +56,20 @@ async function postCrawlCustomer(req, res, next) {
 
 async function getListCustomer(req, res, next) {
   try {
-    const { pageId, page, limit, name, tag_id } = req.query;
+    const { query, options } = _validateQuery(req.query);
+    _log(query, options);
     const result = await getManyCustomer(
       {
-        page_id: pageId,
+        ...query,
         user_id: req.user._id,
-        name: new RegExp(_escapeRegex(name)),
-        tag_id
+        name: new RegExp(_escapeRegex(query.name))
       },
-      { page, limit }
+      options
     );
     return res.json(result);
   } catch (error) {
     _log(error);
-    return next(Error.createError('Có lỗi xảy ra', 500));
+    return next(_createError('Có lỗi xảy ra', 500));
   }
 }
 
@@ -93,4 +93,6 @@ async function handleUpdateManyCustomer(req, res, next) {
     throw error;
   }
 }
+
+// Export module
 module.exports = router;

@@ -1,5 +1,5 @@
-const { mongoose, declareHook } = require('../services/MongoService');
-const validator = require('validator');
+const mongoose = require('mongoose');
+const { declareHook } = require('express-extra-tool').mongoose;
 
 var Schema = mongoose.Schema;
 var schema = new Schema({
@@ -37,6 +37,6 @@ var schema = new Schema({
 });
 
 declareHook(schema, 'Customer');
-const Page = mongoose.model('Customer', schema);
+const Customer = mongoose.model('Customer', schema);
 
-module.exports = Page;
+module.exports = Customer;

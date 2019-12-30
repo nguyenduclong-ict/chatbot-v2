@@ -1,5 +1,5 @@
-const { mongoose } = require('../services/MongoService');
-const { declareHook } = require(__dirroot + '/services/MongoService');
+const mongoose = require('mongoose');
+const { declareHook } = require('express-extra-tool').mongoose;
 var Schema = mongoose.Schema;
 var schema = new Schema({
   filename: {
@@ -34,6 +34,6 @@ var schema = new Schema({
 });
 
 declareHook(schema, 'File');
-
 var File = mongoose.model('File', schema);
+
 module.exports = File;

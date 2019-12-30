@@ -7,7 +7,7 @@ const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _.get(
   ['facebook', APP_NAME],
   {}
 );
-const queue = require(`${__dirroot}/utils/queue`);
+const queue = _rq(`services/Queue`);
 const fbSender = require(`${__dirroot}/utils/fbSender`);
 
 /**
@@ -91,4 +91,5 @@ function handleWeehookVerify(req, res) {
   }
 }
 
+// Export module
 module.exports = router;

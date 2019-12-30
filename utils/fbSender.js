@@ -1,5 +1,5 @@
 const axios = require('axios').default;
-const queue = require('./queue');
+const queue = _rq('services/Queue');
 module.exports = {
   config: {
     PAGE_ACCESS_TOKEN: '',

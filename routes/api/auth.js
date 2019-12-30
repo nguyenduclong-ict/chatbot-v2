@@ -8,11 +8,11 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const salt = bcrypt.genSaltSync(saltRounds);
 // jwt
-const jwt = require('../../services/JwtTokenService');
-const tokenService = require('../../services/TokenServices');
+const jwt = require('express-extra-tool').jwt;
 // auth
 const getUserInfo = _md('get-user-info');
-const { listPageOfUser } = require('../../providers/PageProvider');
+const { listPageOfUser } = _rq('providers/PageProvider');
+const { getUser } = _rq('providers/UserProvider');
 // Route
 router.get('/me', getUserInfo, handleGetUserInfo);
 router.post('/login', postLogIn);
@@ -29,20 +29,18 @@ async function handleGetUserInfo(req, res, next) {
     let imgCode = jwt.sign(req.user._id.toString()).token;
     return res.json({ user: { ...req.user, imgCode: imgCode } });
   } else {
-    next(Error.Error.createError('Bạn chưa đăng nhập', 401));
+    next(Error._createError('Bạn chưa đăng nhập', 401));
   }
 }
 
 async function getRefreshToken(req, res, next) {
   try {
     // Xoa token cu
-    tokenService.removeToken(req.token);
     let user = req.user;
     // Tao token moi cho user
     let payload = { email: user.email };
     let { token } = jwt.sign(payload);
     let result = { token };
-    tokenService.addToken(token);
     return res.json(result);
   } catch (error) {
     return next(error);
@@ -51,12 +49,12 @@ async function getRefreshToken(req, res, next) {
 
 async function postLogIn(req, res, next) {
   let { email, password, username } = req.body;
-  let user = await User.getUser({ email, username });
+  let user = await getUser({ email, username });
 
   try {
     if (user) {
       if (user.is_block)
-        throw Error.createError('Tài khoản hiện đang bị khóa ', 401);
+        throw _createError('Tài khoản hiện đang bị khóa ', 401);
       // Check password
       let same = bcrypt.compareSync(password, user.password);
       if (same) {
@@ -67,20 +65,18 @@ async function postLogIn(req, res, next) {
         } else if (user.username) {
           payload.username = user.username;
         }
-        _log(payload);
         let { token } = jwt.sign(payload);
         let result = {
           token
         };
-        tokenService.addToken(token);
         return res.json(result);
       } else {
         // Password not match
-        throw Error.createError('Tài khoản hoặc mật khẩu không chính xác', 401);
+        throw _createError('Tài khoản hoặc mật khẩu không chính xác', 401);
       }
     } else {
       // Không tồn tại user
-      throw Error.createError('Tài khoản không tồn tại', 401);
+      throw _createError('Tài khoản không tồn tại', 401);
     }
   } catch (error) {
     // MError handle
@@ -115,7 +111,6 @@ async function postSignUp(req, res, next) {
  */
 
 function postLogout(req, res) {
-  tokenService.removeToken(req.token);
   res.sendStatus(200);
 }
 

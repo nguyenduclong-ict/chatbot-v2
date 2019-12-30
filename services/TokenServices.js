@@ -49,13 +49,13 @@ function getTokenData(token) {
     if (client.get(token)) {
       return jwt.verify(token);
     } else {
-      throw Error.createError('Token not in tokens', 401);
+      throw _createError('Token not in tokens', 401);
     }
   } else {
     if (tokens[token]) {
       return jwt.verify(token);
     } else {
-      throw Error.createError('Token not in tokens', 401);
+      throw _createError('Token not in tokens', 401);
     }
   }
 }

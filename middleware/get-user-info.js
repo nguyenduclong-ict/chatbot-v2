@@ -1,13 +1,13 @@
-const TokenService = require('../services/TokenServices');
-const User = require('../models/User');
+const jwt = require('express-extra-tool').jwt;
+const { getUser } = _rq('providers/UserProvider');
 module.exports = async function(req, res, next) {
   // get token from header
   // Check token on token list
   try {
     if (!req.headers.authorization) return next();
     let token = req.headers.authorization.split(' ')[1];
-    let tokenData = TokenService.getTokenData(token);
-    req.user = await User.getUser({
+    let tokenData = jwt.verify(token);
+    req.user = await getUser({
       email: tokenData.email,
       username: tokenData.username
     });

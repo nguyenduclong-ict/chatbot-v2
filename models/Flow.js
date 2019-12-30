@@ -12,15 +12,14 @@ var schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Page'
   },
-  color: String,
-  type: {
-    type: String,
-    enum: ['customer', 'flow', 'job']
+  tags: {
+    type: [Schema.Types.ObjectId],
+    ref: 'Tag'
   },
   created: { type: Date, default: Date.now() }
 });
 
-var Tag = mongoose.model('Tag', schema);
-declareHook(schema, 'Tag');
+var Flow = mongoose.model('Flow', schema);
+declareHook(schema, 'Flow');
 
-module.exports = Tag;
+module.exports = Flow;

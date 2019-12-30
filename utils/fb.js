@@ -2,7 +2,7 @@ const axios = require('axios').default;
 const config = require('../config/index');
 const { graphUrl } = config.facebook;
 
-async function getUserInfo(
+module.exports.getUserInfo = async function(
   userId,
   access_token,
   { userFields, accountsFields } = {}
@@ -14,25 +14,28 @@ async function getUserInfo(
     const endPoint2 = graphUrl + '/' + userId + '/accounts';
 
     const tasks = [];
+
     tasks.push(
       axios.get(endPoint, {
         params: { access_token, fields: userFields, limit: 1000 }
       })
     );
+
     tasks.push(
       axios.get(endPoint2, {
         params: { access_token, fields: accountsFields, limit: 1000 }
       })
     );
+
     const [me, accounts] = await Promise.all(tasks);
     return { ...me.data, accounts: accounts.data.data };
   } catch (error) {
     _log('Get User Info fail ', error.message);
     return null;
   }
-}
+};
 
-async function getLongLiveToken(appName, shortToken) {
+module.exports.getLongLiveToken = async function(appName, shortToken) {
   try {
     const { APP_ID, APP_SECRET } = config.facebook[appName];
     const endPoint = `${graphUrl}/oauth/access_token`;
@@ -48,9 +51,13 @@ async function getLongLiveToken(appName, shortToken) {
     _log('Get long live token error ', error.message);
     return null;
   }
-}
+};
 
-async function subscribeApp(pageId, access_token, subscribed_fields) {
+module.exports.subscribeApp = async function(
+  pageId,
+  access_token,
+  subscribed_fields
+) {
   const endPoint = graphUrl + '/' + pageId + '/subscribed_apps';
   try {
     subscribed_fields = subscribed_fields || [
@@ -68,9 +75,9 @@ async function subscribeApp(pageId, access_token, subscribed_fields) {
     _log('Subscribed App Error ', error.message);
     return null;
   }
-}
+};
 
-async function unSubscriedApp(pageId, access_token) {
+module.exports.unSubscriedApp = async function(pageId, access_token) {
   const endPoint = graphUrl + '/' + pageId + '/subscribed_apps';
   try {
     const response = await axios.delete(endPoint, { params: { access_token } });
@@ -79,11 +86,42 @@ async function unSubscriedApp(pageId, access_token) {
     _log('UnSubscribed App Error ', error.message);
     return null;
   }
-}
+};
 
-module.exports = {
-  getUserInfo,
-  getLongLiveToken,
-  subscribeApp,
-  unSubscriedApp
+/**
+ * Sync messenger profile
+ */
+module.exports.updateMessagerProfile = async function(
+  pageId,
+  access_token,
+  settings
+) {
+  const endpoint = graphUrl + '/' + pageId + '/messenger_profile';
+  _log(settings);
+  try {
+    return (await axios.post(endpoint, settings, { params: { access_token } }))
+      .data;
+  } catch (error) {
+    _log('Update Messenger Profile setting App Error ', error);
+    return null;
+  }
+};
+
+/**
+ * menu : persitent_menu, get_started, greeting
+ */
+module.exports.deleteMessengerProfile = async function(
+  pageId,
+  access_token,
+  fields
+) {
+  const endpoint = graphUrl + '/' + pageId + '/messenger_profile';
+  try {
+    return (
+      await axios.delete(endpoint, {}, { params: { access_token, fields } })
+    ).data;
+  } catch (error) {
+    _log('Delete Messenger Profile setting Error ', error);
+    return null;
+  }
 };

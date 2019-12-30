@@ -1,4 +1,5 @@
-const { mongoose, declareHook } = require('../services/MongoService');
+const mongoose = require('mongoose');
+const { declareHook } = require('express-extra-tool').mongoose;
 
 var Schema = mongoose.Schema;
 var schema = new Schema({
@@ -7,8 +8,21 @@ var schema = new Schema({
   id: String,
   type: String,
   token_expires: Date,
-  persistent_menu: Schema.Types.Map,
-  get_started: Object,
+  settings: {
+    type: Schema.Types.Map,
+    default: {
+      get_started: {
+        payload: 'SETTING.GET_STARTED'
+      },
+      persistent_menu: [],
+      greeting: [
+        {
+          locale: 'default',
+          text: 'Xin chào {{user_full_name}}, rất vui được hỗ trợ bạn!'
+        }
+      ]
+    }
+  },
   user_id: {
     type: Schema.Types.ObjectId,
     ref: 'User'

@@ -1,5 +1,9 @@
 const Customer = require('../models/Customer');
-const { declareCRUD } = require('../services/MongoService');
+const { declareCRUD } = require('express-extra-tool').mongoose;
+/**
+ * Create customer
+ * @param {*} data Customer data
+ */
 function createCustomer(data) {
   let doc = new Customer(data);
   return doc.save();

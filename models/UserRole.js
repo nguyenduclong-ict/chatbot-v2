@@ -1,4 +1,5 @@
-const { mongoose } = require('../services/MongoService');
+const mongoose = require('mongoose');
+
 var Schema = mongoose.Schema;
 var schema = new Schema({
   value: {
@@ -16,13 +17,4 @@ var schema = new Schema({
 
 var UserRole = mongoose.model('UserRole', schema);
 
-/**
- *
- * @param { { value : string, name : string } }  param0
- */
-function addUserRole({ value, name }) {
-  let userRole = new UserRole({ value, name });
-  return userRole.save();
-}
-
-module.exports = { ...UserRole, addUserRole, _instance: UserRole };
+module.exports = UserRole;

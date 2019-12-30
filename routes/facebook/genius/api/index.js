@@ -87,7 +87,7 @@ async function postAddPage(req, res) {
     return res.json({ success: true });
   } catch (error) {
     console.log(error);
-    return Error.createError(error.message, 500);
+    return _createError(error.message, 500);
   }
 }
 
@@ -116,11 +116,11 @@ async function postActivePage(req, res) {
         throw 'Xảy ra lỗi';
       }
     } else {
-      return Error.createError('Không tìm thấy Page', 404);
+      return _createError('Không tìm thấy Page', 404);
     }
   } catch (error) {
     _log(error);
-    return Error.createError(error.message || 'Xảy ra lỗi', error.code || 500);
+    return _createError(error.message || 'Xảy ra lỗi', error.code || 500);
   }
 }
 
@@ -141,12 +141,13 @@ async function postDeActivePage(req, res) {
         throw 'Xảy ra lỗi';
       }
     } else {
-      return Error.createError('Không tìm thấy Page', 404);
+      return _createError('Không tìm thấy Page', 404);
     }
   } catch (error) {
     _log(error);
-    return Error.createError(error.message || 'Xảy ra lỗi', error.code || 500);
+    return _createError(error.message || 'Xảy ra lỗi', error.code || 500);
   }
 }
 
+// Export module
 module.exports = router;

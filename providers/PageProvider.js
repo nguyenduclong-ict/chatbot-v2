@@ -1,5 +1,5 @@
 const Page = require('../models/Page');
-
+const { declareCRUD } = require('express-extra-tool').mongoose;
 function addPage(data) {
   let doc = new Page(data);
   return doc.save();
@@ -18,4 +18,10 @@ async function listPageOfUser(userId) {
   return list || [];
 }
 
-module.exports = { addPage, updatePage, listPageOfUser, updateManyPage };
+module.exports = {
+  addPage,
+  updatePage,
+  listPageOfUser,
+  updateManyPage,
+  ...declareCRUD(Page, 'Page')
+};

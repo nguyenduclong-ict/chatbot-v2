@@ -1,24 +1,29 @@
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
 // import model
-const Tag = _rq('models/Tag');
-const { createTag, updateTag, updateManyTag, getManyTag, deleteTag } = _rq(
-  'providers/TagProvider'
-);
+const {
+  createBlock,
+  updateBlock,
+  updateManyBlock,
+  getManyBlock,
+  deleteBlock,
+  getBlock
+} = _rq('providers/BlockProvider');
 
 // Middleware
 router.use(_md('get-user-info'));
 
 // route
-router.get('/', handleGetListTag);
-router.get('/:id', handleGetTag);
+router.get('/', handleGetListBlock);
+router.get('/:id', handleGetBlock);
 
-router.post('/', handleCreateTag);
+router.post('/', handleCreateBlock);
 
-router.put('/:id', handleUpdateTag);
-router.put('/', handleUpdateManyTag);
+router.put('/:id', handleUpdateBlock);
+router.put('/', handleUpdateManyBlock);
 
-router.delete('/:id', handleDeleteTag);
-router.post('/', handleDeleteManyTag);
+router.delete('/:id', handleDeleteBlock);
+router.post('/', handleDeleteManyBlock);
 
 /**
  * Crawl all user facebook
@@ -27,7 +32,7 @@ router.post('/', handleDeleteManyTag);
  * @param { NextFuction } next
  */
 
-async function handleGetListTag(req, res, next) {
+async function handleGetListBlock(req, res, next) {
   let { query, options } = _validateQuery(req.query);
   console.log(query, options);
   try {
@@ -36,10 +41,10 @@ async function handleGetListTag(req, res, next) {
       name: new RegExp(query.name),
       user_id: req.user._id
     });
-    const result = await getManyTag(query, options);
+    const result = await getManyBlock(query, options);
     return res.json(result);
   } catch (error) {
-    _log('get List Tag error : ', error);
+    _log('get List Block error : ', error);
     throw error;
   }
 }
@@ -51,13 +56,13 @@ async function handleGetListTag(req, res, next) {
  * @param { NextFuction } next
  */
 
-async function handleGetTag(req, res, next) {
+async function handleGetBlock(req, res, next) {
   const id = req.params.id;
   try {
-    const result = await getTag({ _id: id });
+    const result = await getBlock({ _id: id });
     return res.json(result);
   } catch (error) {
-    _log('get List Tag error : ', error);
+    _log('get List Block error : ', error);
     throw error;
   }
 }
@@ -69,14 +74,14 @@ async function handleGetTag(req, res, next) {
  * @param { NextFuction } next
  */
 
-async function handleCreateTag(req, res, next) {
+async function handleCreateBlock(req, res, next) {
   const data = req.body;
   data.user_id = req.user._id;
   try {
-    const result = await createTag(data);
+    const result = await createBlock(data);
     return res.json(result);
   } catch (error) {
-    _log('create Tag error : ', error);
+    _log('create Block error : ', error);
     throw error;
   }
 }
@@ -88,14 +93,14 @@ async function handleCreateTag(req, res, next) {
  * @param { NextFuction } next
  */
 
-async function handleUpdateTag(req, res, next) {
+async function handleUpdateBlock(req, res, next) {
   const id = req.params.id;
   const data = req.body;
   try {
-    const result = await updateTag({ _id: id }, data);
+    const result = await updateBlock({ _id: id }, data);
     return res.json(result);
   } catch (error) {
-    _log('update Tag error : ', error);
+    _log('update Block error : ', error);
     throw error;
   }
 }
@@ -107,10 +112,10 @@ async function handleUpdateTag(req, res, next) {
  * @param { NextFuction } next
  */
 
-async function handleUpdateManyTag(req, res, next) {
+async function handleUpdateManyBlock(req, res, next) {
   const { ids, data } = req.body;
   try {
-    const result = await updateManyTag(
+    const result = await updateManyBlock(
       {
         _id: {
           $in: ids
@@ -120,7 +125,7 @@ async function handleUpdateManyTag(req, res, next) {
     );
     return res.json(result);
   } catch (error) {
-    _log('get List Tag error : ', error);
+    _log('get List Block error : ', error);
     throw error;
   }
 }
@@ -132,13 +137,13 @@ async function handleUpdateManyTag(req, res, next) {
  * @param { NextFuction } next
  */
 
-async function handleDeleteTag(req, res, next) {
+async function handleDeleteBlock(req, res, next) {
   const id = req.params.id;
   try {
-    const result = await deleteTag({ _id: id });
+    const result = await deleteBlock({ _id: id });
     return res.json(result);
   } catch (error) {
-    _log('Delete List Tag error : ', error);
+    _log('Delete List Block error : ', error);
     throw error;
   }
 }
@@ -150,17 +155,39 @@ async function handleDeleteTag(req, res, next) {
  * @param { NextFuction } next
  */
 
-async function handleDeleteManyTag(req, res, next) {
+async function handleDeleteManyBlock(req, res, next) {
   const { ids } = req.body;
   try {
-    const result = await deleteManyTag({
+    const result = await deleteManyBlock({
       _id: {
         $in: ids
       }
     });
     return res.json(result);
   } catch (error) {
-    _log('Delete many Tag error : ', error);
+    _log('Delete many Block error : ', error);
+    throw error;
+  }
+}
+
+/**
+ * Crawl all user facebook
+ * @param { express.request } req
+ * @param { express.response } res
+ * @param { NextFuction } next
+ */
+
+async function handleDeleteManyBlock(req, res, next) {
+  const { ids } = req.body;
+  try {
+    const result = await deleteManyBlock({
+      _id: {
+        $in: ids
+      }
+    });
+    return res.json(result);
+  } catch (error) {
+    _log('Delete many Block error : ', error);
     throw error;
   }
 }
