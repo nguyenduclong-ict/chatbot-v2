@@ -34,18 +34,19 @@ router.post('/', handleDeleteManyBlock);
 
 async function handleGetListBlock(req, res, next) {
   let { query, options } = _validateQuery(req.query);
-  console.log(query, options);
+  // Cast data type
+  query.is_draft = Boolean(query.is_draft);
+  //
   try {
     query = _omit({
-      ...query,
-      name: new RegExp(query.name),
-      user_id: req.user._id
+      ...query
     });
+    console.log(query, options);
     const result = await getManyBlock(query, options);
     return res.json(result);
   } catch (error) {
     _log('get List Block error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -63,7 +64,7 @@ async function handleGetBlock(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Block error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -82,7 +83,7 @@ async function handleCreateBlock(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('create Block error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -96,12 +97,30 @@ async function handleCreateBlock(req, res, next) {
 async function handleUpdateBlock(req, res, next) {
   const id = req.params.id;
   const data = req.body;
+  const task = [];
+  if (data.is_start) {
+    task.push(
+      updateManyBlock(
+        {
+          _id: {
+            $ne: data._id
+          },
+          flow_id: data.flow_id,
+          is_draft: true
+        },
+        {
+          is_start: false
+        }
+      )
+    );
+  }
   try {
-    const result = await updateBlock({ _id: id }, data);
+    task.push(updateBlock({ _id: id }, data));
+    const [result] = await Promise.all(task);
     return res.json(result);
   } catch (error) {
     _log('update Block error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -126,7 +145,7 @@ async function handleUpdateManyBlock(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Block error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -144,7 +163,7 @@ async function handleDeleteBlock(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete List Block error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -166,7 +185,7 @@ async function handleDeleteManyBlock(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete many Block error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -188,7 +207,7 @@ async function handleDeleteManyBlock(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete many Block error : ', error);
-    throw error;
+    next(error);
   }
 }
 

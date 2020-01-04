@@ -48,7 +48,7 @@ async function handleGetListPage(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Page error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -66,7 +66,7 @@ async function handleGetPage(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Page error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -85,7 +85,7 @@ async function handleCreatePage(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('create Page error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -104,7 +104,7 @@ async function handleUpdatePage(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('update Page error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -129,7 +129,7 @@ async function handleUpdateManyPage(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Page error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -147,7 +147,7 @@ async function handleDeletePage(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete List Page error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -169,7 +169,7 @@ async function handleDeleteManyPage(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete many Page error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -191,7 +191,7 @@ async function handleDeleteManyPage(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete many Page error : ', error);
-    throw error;
+    next(error);
   }
 }
 

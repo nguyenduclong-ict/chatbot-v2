@@ -90,7 +90,7 @@ async function handleUpdateManyCustomer(req, res, next) {
 
     return res.json(rs);
   } catch (error) {
-    throw error;
+    next(error);
   }
 }
 

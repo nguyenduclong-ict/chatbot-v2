@@ -3,7 +3,7 @@ const { get } = require('lodash');
 const APP_NAME = 'genius';
 
 const moment = require('moment');
-const { updateUser } = _rq('/models/User');
+const { updateUser } = _rq('/providers/UserProvider');
 const Page = _rq('/models/Page');
 const { updatePage, updateManyPage } = _rq('/providers/PageProvider');
 const { getUserInfo, getLongLiveToken, subscribeApp, unSubscriedApp } = _rq(

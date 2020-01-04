@@ -12,10 +12,12 @@ var schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Page'
   },
-  tags: {
-    type: [Schema.Types.ObjectId],
-    ref: 'Tag'
-  },
+  tags: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Tag'
+    }
+  ],
   created: { type: Date, default: Date.now() }
 });
 

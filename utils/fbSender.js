@@ -1,12 +1,15 @@
 const axios = require('axios').default;
 const queue = _rq('services/Queue');
+
+let api = 'https://graph.facebook.com/v5.0';
+
 module.exports = {
   config: {
     PAGE_ACCESS_TOKEN: '',
     SERVER_URL: process.env.HOST || 'localhost:' + process.env.PORT,
     VERSION: 'v5.0'
   },
-  api: 'https://graph.facebook.com/v5.0',
+  api,
   /**
    *
    * @param {*} config PAGE_ACCESS_TOKEN, SERVER_URL
@@ -83,5 +86,34 @@ module.exports = {
       access_token: this.config.PAGE_ACCESS_TOKEN
     };
     return axios.get(url, { params });
+  },
+  /**
+   *
+   * @param {string} access_token page access_token
+   * @param {string} senderId
+   * @param {*} payload message data
+   * @returns {Promise<any>}
+   */
+  sendMessage(access_token, senderId, message) {
+    const data = {
+      recipient: {
+        id: senderId
+      },
+      message
+    };
+    const url = api + '/me/messages';
+    const params = {
+      access_token
+    };
+    return new Promise((resolve, reject) => {
+      axios
+        .post(url, data, { params })
+        .then(res => {
+          resolve({ senderId, success: true });
+        })
+        .catch(error => {
+          resolve({ senderId, success: false, error });
+        });
+    });
   }
 };

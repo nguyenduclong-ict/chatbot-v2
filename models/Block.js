@@ -13,8 +13,12 @@ var schema = new Schema({
     enum: ['message', 'action', 'condition', 'delay']
   },
   content: {
-    type: JSON,
-    default: {}
+    type: Schema.Types.Mixed,
+    default: {
+      cards: [],
+      conditions: [],
+      actions: []
+    }
   },
   position: {
     type: {
@@ -26,9 +30,14 @@ var schema = new Schema({
       y: Math.floor(Math.random() * 1000)
     }
   },
+  has_next_block: {
+    type: Boolean,
+    default: false
+  },
   next_block_id: {
     type: Schema.Types.ObjectId,
-    ref: 'Block'
+    ref: 'Block',
+    default: null
   },
   next_flow_id: {
     type: Schema.Types.ObjectId,

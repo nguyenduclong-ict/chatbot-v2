@@ -15,11 +15,23 @@ var logger = require('morgan');
 const cors = require('cors');
 var app = express();
 
-// Init queue
+const Block = _rq('models/Block');
+
+// Services
 require('./services/Queue');
-// Connect database
+// cronjob
+// const Cron = require('./services/Cron');
+// const cronjobs = [];
+// // const cronjobs = ['checkBroadCastMessage'];
+// Cron.filter(e => cronjobs.includes(e.name)).forEach(item => {
+//   _log('Start cronjob ' + item.name);
+//   item.job.start();
+// });
+// database
 const { host, user, pass, dbName, port } = config.mongodb;
-extraTool.mongoose.connectDatabase({ host, dbName, port, user, pass });
+extraTool.mongoose
+  .connectDatabase({ host, dbName, port, user, pass })
+  .then(() => {});
 extraTool.jwt.initJWT({
   secret: config.jwt.JWT_SECRET,
   tokenExpires: config.jwt.TOKEN_EXPIRES

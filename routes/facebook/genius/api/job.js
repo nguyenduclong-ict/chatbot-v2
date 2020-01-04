@@ -45,7 +45,7 @@ async function handleGetListJob(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Job error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -63,7 +63,7 @@ async function handleGetJob(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Job error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -82,7 +82,7 @@ async function handleCreateJob(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('create Job error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -101,7 +101,7 @@ async function handleUpdateJob(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('update Job error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -126,7 +126,7 @@ async function handleUpdateManyJob(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Job error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -144,7 +144,7 @@ async function handleDeleteJob(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete List Job error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -166,7 +166,7 @@ async function handleDeleteManyJob(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete many Job error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -188,7 +188,7 @@ async function handleDeleteManyJob(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete many Job error : ', error);
-    throw error;
+    next(error);
   }
 }
 

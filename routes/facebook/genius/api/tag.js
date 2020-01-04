@@ -40,7 +40,7 @@ async function handleGetListTag(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Tag error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -58,7 +58,7 @@ async function handleGetTag(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Tag error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -77,7 +77,7 @@ async function handleCreateTag(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('create Tag error : ', error);
-    throw error;
+    return next(error)
   }
 }
 
@@ -96,7 +96,7 @@ async function handleUpdateTag(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('update Tag error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -121,7 +121,7 @@ async function handleUpdateManyTag(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Tag error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -139,7 +139,7 @@ async function handleDeleteTag(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete List Tag error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -161,7 +161,7 @@ async function handleDeleteManyTag(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete many Tag error : ', error);
-    throw error;
+    next(error);
   }
 }
 

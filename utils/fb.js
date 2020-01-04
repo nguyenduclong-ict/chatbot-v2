@@ -63,7 +63,8 @@ module.exports.subscribeApp = async function(
     subscribed_fields = subscribed_fields || [
       'feed',
       'messages',
-      'conversations'
+      'conversations',
+      'messaging_optins'
     ];
     const response = await axios.post(
       endPoint,
@@ -102,7 +103,7 @@ module.exports.updateMessagerProfile = async function(
     return (await axios.post(endpoint, settings, { params: { access_token } }))
       .data;
   } catch (error) {
-    _log('Update Messenger Profile setting App Error ', error);
+    _log('Update Messenger Profile setting App Error ', error.response.data);
     return null;
   }
 };

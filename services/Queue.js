@@ -3,15 +3,28 @@ const queue = kue.createQueue();
 const axios = require('axios').default;
 const { graphUrl } = require(__dirroot + '/config').facebook;
 const Customer = require(__dirroot + '/models/Customer');
-
+const { sendMessage } = require('../utils/fbSender');
 // set options
 queue.setMaxListeners(100);
 
 // declare queue
-queue.process('postfacebookapi', 100, postFacebookAPI);
+queue.process('postfacebookapi', 20, postFacebookAPI);
 queue.process('crawl-customer', 5, crawlCustomerFacebook);
+queue.process('send-broadcast-message', 20, sendBroadcastMessage);
 
 // Fuctions
+
+function sendBroadcastMessage(job, done) {
+  const task = [];
+  const { access_token, message, senderIds } = job.data;
+  senderIds.forEach(senderId => {
+    task.push(sendMessage(access_token, senderId, message));
+  });
+  Promise.all(task).then(rs => {
+    _log(rs);
+  });
+}
+
 function postFacebookAPI(job, done) {
   const { url, data, params } = job.data;
   _log('sendMessage to ', { data });

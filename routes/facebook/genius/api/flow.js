@@ -9,6 +9,9 @@ const {
   deleteFlow,
   getFlow
 } = _rq('providers/FlowProvider');
+const { deleteManyBlock, createBlock, getBlock } = _rq(
+  'providers/BlockProvider'
+);
 
 // Middleware
 router.use(_md('get-user-info'));
@@ -45,7 +48,7 @@ async function handleGetListFlow(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Flow error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -63,7 +66,7 @@ async function handleGetFlow(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Flow error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -79,10 +82,16 @@ async function handleCreateFlow(req, res, next) {
   data.user_id = req.user._id;
   try {
     const result = await createFlow(data);
+    await createBlock({
+      flow_id: result._id,
+      is_start: true,
+      type: 'message',
+      name: 'Tin nhắn bắt đầu'
+    });
     return res.json(result);
   } catch (error) {
     _log('create Flow error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -101,7 +110,7 @@ async function handleUpdateFlow(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('update Flow error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -126,7 +135,7 @@ async function handleUpdateManyFlow(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('get List Flow error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -140,11 +149,14 @@ async function handleUpdateManyFlow(req, res, next) {
 async function handleDeleteFlow(req, res, next) {
   const id = req.params.id;
   try {
-    const result = await deleteFlow({ _id: id });
+    const result = await Promise.all([
+      deleteFlow({ _id: id }),
+      deleteManyBlock({ flow_id: id })
+    ]);
     return res.json(result);
   } catch (error) {
     _log('Delete List Flow error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -166,7 +178,7 @@ async function handleDeleteManyFlow(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete many Flow error : ', error);
-    throw error;
+    next(error);
   }
 }
 
@@ -188,7 +200,7 @@ async function handleDeleteManyFlow(req, res, next) {
     return res.json(result);
   } catch (error) {
     _log('Delete many Flow error : ', error);
-    throw error;
+    next(error);
   }
 }
 

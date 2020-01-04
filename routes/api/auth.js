@@ -29,7 +29,7 @@ async function handleGetUserInfo(req, res, next) {
     let imgCode = jwt.sign(req.user._id.toString()).token;
     return res.json({ user: { ...req.user, imgCode: imgCode } });
   } else {
-    next(Error._createError('Bạn chưa đăng nhập', 401));
+    next(_createError('Bạn chưa đăng nhập', 401));
   }
 }
 
@@ -50,7 +50,7 @@ async function getRefreshToken(req, res, next) {
 async function postLogIn(req, res, next) {
   let { email, password, username } = req.body;
   let user = await getUser({ email, username });
-
+  _log(user);
   try {
     if (user) {
       if (user.is_block)

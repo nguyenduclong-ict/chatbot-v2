@@ -1,15 +1,12 @@
 const router = require('express').Router();
-/** @type {SocketIO.Server} */
-const io = require(`${__dirroot}/services/Socket.IO`);
 const APP_NAME = 'genius';
 const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _.get(
   require(`${__dirroot}/config`),
   ['facebook', APP_NAME],
   {}
 );
-const queue = _rq(`services/Queue`);
-const fbSender = require(`${__dirroot}/utils/fbSender`);
-
+const { parseQuery } = require('express-extra-tool').functions;
+const { testFlow } = _rq('services/Facebook');
 /**
  * Routes
  */
@@ -55,9 +52,20 @@ function handleReciveEvent(req, res, next) {
       var timeOfEvent = pageEntry.time;
       // const pageInfo =
       _log(pageEntry);
-      // pageEntry.messaging.forEach(message => {
-      //   console.log(message);
-      // });
+      pageEntry.messaging.forEach(message => {
+        console.log(message);
+
+        if (message.optin) {
+          // message send form plugin send to messenger
+          const data = parseQuery(message.optin.ref);
+          if (data.action === 'test-flow') {
+            console.log('handle test flow');
+            const senderId = message.sender.id;
+            const { flow_id, user_id, page_id } = data;
+            testFlow(flow_id, senderId, user_id, page_id);
+          }
+        }
+      });
     });
   }
 }

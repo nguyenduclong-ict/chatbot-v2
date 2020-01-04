@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-var Schema = mongoose.Schema;
 
+var Schema = mongoose.Schema;
 /**
  * Defind model
  */
