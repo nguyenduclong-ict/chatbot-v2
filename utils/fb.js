@@ -64,7 +64,8 @@ module.exports.subscribeApp = async function(
       'feed',
       'messages',
       'conversations',
-      'messaging_optins'
+      'messaging_optins',
+      'messaging_postbacks'
     ];
     const response = await axios.post(
       endPoint,
