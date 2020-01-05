@@ -18,11 +18,13 @@ async function testFlow(flow_id, senderId, user_id, page_id) {
 
   const rs = await sendBlock(startBlock, [senderId], page.access_token);
   _log(rs);
-  socketio.to(page._id).emit('notify', {
-    type: 'success',
-    action: 'test-flow',
-    message: 'Gửi tin nhắn test thành công!'
-  });
+  socketio()
+    .to(page._id)
+    .emit('notify', {
+      type: 'success',
+      action: 'test-flow',
+      message: 'Gửi tin nhắn test thành công!'
+    });
 }
 
 /**
@@ -32,6 +34,10 @@ async function testFlow(flow_id, senderId, user_id, page_id) {
  * @param {string} access_token page access token
  */
 async function sendBlock(block, senderIds, access_token) {
+  if (!block._id) {
+    block = await getBlock({ _id: block });
+  }
+  if (!block) return 'Không tìm thấy block ';
   let result = 'Không có tin nào đc gửi';
   const tasks = [];
   senderIds.forEach(senderId => {
@@ -49,6 +55,11 @@ async function sendBlock(block, senderIds, access_token) {
     tasks.push(Promise.all(task));
   });
   result = await Promise.all(tasks);
+
+  // send next block if have
+  if (block.has_next_block && block.next_block_id) {
+    sendBlock(block.next_block_id.toString(), senderIds, access_token);
+  }
   return result;
 }
 
@@ -127,6 +138,7 @@ function makeButtonMessage({ text, buttons }) {
  */
 function validateButtons(buttons) {
   if (buttons.length === 0) return false;
+  _log(buttons);
   return buttons.every(button => {
     if (button.type === 'web_url') {
       return [

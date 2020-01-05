@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const { getUserRole } = require('./UserRoleProvider');
+const { getManyUserRole } = require('./UserRoleProvider');
 /**
  *
  * @param {{email, password, info, role, username }} param0
@@ -18,12 +18,16 @@ async function addUser({
   try {
     // check user roles
     let isBlock = false;
-    const docs = await getUserRole({
-      value: {
-        $in: roles
-      }
-    });
-    if (docs.length < roles.lenght) throw new Error('Roles not exits');
+    const userRoleData = await getManyUserRole(
+      {
+        value: {
+          $in: roles
+        }
+      },
+      {}
+    );
+    const docs = userRoleData.data;
+    if (docs.length < roles.length) throw new Error('Roles not exits');
     if (docs.some(e => e.level === 0)) isBlock = true;
     const data = {
       username,

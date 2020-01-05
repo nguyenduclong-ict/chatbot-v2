@@ -1,12 +1,16 @@
 const router = require('express').Router();
 const APP_NAME = 'genius';
 const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _.get(
-  require(`${__dirroot}/config`),
+  _rq('config'),
   ['facebook', APP_NAME],
   {}
 );
 const { parseQuery } = require('express-extra-tool').functions;
-const { testFlow } = _rq('services/Facebook');
+const { testFlow, sendBlock } = _rq('services/Facebook');
+
+const { getPage } = _rq('providers/PageProvider');
+const { getBlock } = _rq('providers/BlockProvider');
+
 /**
  * Routes
  */
@@ -39,8 +43,7 @@ if (!(APP_SECRET && VERIFY_TOKEN && SERVER_URL)) {
  * @param {NextFunction} next
  */
 
-function handleReciveEvent(req, res, next) {
-  _log('on recived event', req.body);
+async function handleReciveEvent(req, res, next) {
   res.sendStatus(200);
   // Make sure this is a page subscription
   const data = req.body;
@@ -52,17 +55,31 @@ function handleReciveEvent(req, res, next) {
       var timeOfEvent = pageEntry.time;
       // const pageInfo =
       _log(pageEntry);
-      pageEntry.messaging.forEach(message => {
+      pageEntry.messaging.forEach(async message => {
         console.log(message);
-
+        const senderId = message.sender.id;
+        const pageId = message.recipient.id;
+        // message send form plugin send to messenger
         if (message.optin) {
-          // message send form plugin send to messenger
-          const data = parseQuery(message.optin.ref);
+          const data = parseQuery(message.optin.ref, '+');
           if (data.action === 'test-flow') {
             console.log('handle test flow');
-            const senderId = message.sender.id;
-            const { flow_id, user_id, page_id } = data;
-            testFlow(flow_id, senderId, user_id, page_id);
+            const { flow_id, user_id } = data;
+            testFlow(flow_id, senderId, user_id, pageId);
+          }
+        }
+
+        // handle post back
+        if (message.postback) {
+          const data = parseQuery(message.postback.payload, '+');
+
+          if (data.block) {
+            // send next block
+            const [block, page] = await Promise.all([
+              getBlock({ _id: data.block }),
+              getPage({ id: pageId, user_id: data.user_id })
+            ]);
+            if (block) sendBlock(block, [senderId], page.access_token);
           }
         }
       });

@@ -15,8 +15,6 @@ var logger = require('morgan');
 const cors = require('cors');
 var app = express();
 
-const Block = _rq('models/Block');
-
 // Services
 require('./services/Queue');
 // cronjob
@@ -27,11 +25,11 @@ require('./services/Queue');
 //   _log('Start cronjob ' + item.name);
 //   item.job.start();
 // });
+
 // database
-const { host, user, pass, dbName, port } = config.mongodb;
-extraTool.mongoose
-  .connectDatabase({ host, dbName, port, user, pass })
-  .then(() => {});
+require('./services/Mongoose').connectDatabase();
+
+// JWT Token
 extraTool.jwt.initJWT({
   secret: config.jwt.JWT_SECRET,
   tokenExpires: config.jwt.TOKEN_EXPIRES

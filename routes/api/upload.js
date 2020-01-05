@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const fs = require('fs');
-const File = require('../../models/File');
+const File = _rq('models/File');
 
 // middle ware
 router.middlewares = ['get-user-info'];
@@ -89,7 +89,7 @@ async function postUploadFiles(req, res) {
         tags: tags
       };
 
-      let file = new File.model(obj);
+      let file = new File(obj);
       promise.push(file.save());
     });
     Promise.all(promise).then(result => {

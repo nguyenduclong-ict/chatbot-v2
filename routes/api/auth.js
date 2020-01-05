@@ -12,7 +12,7 @@ const jwt = require('express-extra-tool').jwt;
 // auth
 const getUserInfo = _md('get-user-info');
 const { listPageOfUser } = _rq('providers/PageProvider');
-const { getUser } = _rq('providers/UserProvider');
+const { getUser, addUser } = _rq('providers/UserProvider');
 // Route
 router.get('/me', getUserInfo, handleGetUserInfo);
 router.post('/login', postLogIn);
@@ -95,7 +95,7 @@ async function postSignUp(req, res, next) {
   let { email, password, username, info, roles } = req.body;
   password = bcrypt.hashSync(password, salt);
   try {
-    let user = await User.addUser({ email, password, username, info, roles });
+    let user = await addUser({ email, password, username, info, roles });
     return res.json(user);
   } catch (error) {
     // MError handle
