@@ -15,6 +15,7 @@ router.use(_md('get-user-info'));
 
 // route
 router.get('/', handleGetListBlock);
+router.post('/list', handlePostQueryBlock);
 router.get('/:id', handleGetBlock);
 
 router.post('/', handleCreateBlock);
@@ -37,6 +38,29 @@ async function handleGetListBlock(req, res, next) {
   // Cast data type
   query.is_draft = Boolean(query.is_draft);
   //
+  try {
+    query = _omit({
+      ...query
+    });
+    console.log(query, options);
+    const result = await getManyBlock(query, options);
+    return res.json(result);
+  } catch (error) {
+    _log('get List Block error : ', error);
+    next(error);
+  }
+}
+
+/**
+ * Crawl all user facebook
+ * @param { express.request } req
+ * @param { express.response } res
+ * @param { NextFuction } next
+ */
+
+async function handlePostQueryBlock(req, res, next) {
+  let { query, options } = _validateQuery(req.body);
+  // Cast data type
   try {
     query = _omit({
       ...query

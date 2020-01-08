@@ -2,16 +2,8 @@ __dirroot = __dirroot || '/Users/longn/Code/work/webhook';
 var express = require('express');
 var router = express.Router();
 var request = require('request');
-const { PAGE_ACCESS_TOKEN, VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _get(
-  require(__dirroot + '/config'),
-  'facebook/example'
-);
 
-const { PAGE_ACCESS_TOKEN, VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _get(
-  require(__dirroot + '/config'),
-  'facebook/example'
-);
-
+const config =  { PAGE_ACCESS_TOKEN : '', VERIFY_TOKEN  : '', APP_SECRET : '', SERVER_URL  : ''} 
 /*
  * Be sure to setup your config values before running this code. You can
  * set them using environment variables or modifying the config file in /config.

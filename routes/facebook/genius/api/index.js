@@ -1,13 +1,16 @@
 const router = require('express').Router();
 const { get } = require('lodash');
+
 const APP_NAME = 'genius';
+const config = _rq('/config');
+const { APP_ID, APP_SECRET } = get(config, ['facebook', APP_NAME]);
 
 const moment = require('moment');
 const { updateUser } = _rq('/providers/UserProvider');
 const Page = _rq('/models/Page');
 const { updatePage, updateManyPage } = _rq('/providers/PageProvider');
 const { getUserInfo, getLongLiveToken, subscribeApp, unSubscriedApp } = _rq(
-  '/utils/fb'
+  '/services/Facebook'
 );
 
 // defind middleware for current route
@@ -25,7 +28,7 @@ async function postAddPage(req, res) {
     const { accessToken, userID } = req.body;
 
     // get long live token
-    result = await getLongLiveToken(APP_NAME, accessToken);
+    result = await getLongLiveToken(accessToken, APP_ID, APP_SECRET);
     let { access_token, expires_in } = result;
     expires_in = expires_in || 60 * 24 * 60 * 60;
     const expires_at = moment()

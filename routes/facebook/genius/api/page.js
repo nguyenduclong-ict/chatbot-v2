@@ -1,6 +1,11 @@
 const router = require('express').Router();
 // import model
-const { updateMessagerProfile, deleteMessagerProfile } = _rq('utils/fb');
+const { updateMessagerProfile, deleteMessengerProfile } = _rq(
+  'services/Facebook'
+);
+const { validatePersistentMenu, validateGreeting, validateGetStarted } = _rq(
+  '/utils/facebook'
+);
 const {
   createPage,
   updatePage,
@@ -25,8 +30,8 @@ router.put('/', handleUpdateManyPage);
 router.delete('/:id', handleDeletePage);
 router.post('/', handleDeleteManyPage);
 
-router.post('/sync', handleUpdateMessengerProfile);
-router.delete('/sync', handleDeleteMessengerProfile);
+router.post('/sync-on', handleUpdateMessengerProfile);
+router.post('/sync-off', handleDisableMessengerProfile);
 
 /**
  * Crawl all user facebook
@@ -203,11 +208,69 @@ async function handleDeleteManyPage(req, res, next) {
  */
 
 async function handleUpdateMessengerProfile(req, res, next) {
-  const page = req.body;
+  const { page, fields } = req.body;
   try {
     const task = [];
+    const settings = _.pick(page.settings, fields);
+    const m = [];
+
+    if (fields.includes('persistent_menu') && !fields.includes('get_started')) {
+      settings.get_started = { payload: 'abc' };
+      fields.push('get_started');
+    }
+
+    if (fields.includes('get_started') && !fields.includes('persistent_menu')) {
+      settings.persistent_menu = [];
+      fields.push('persistent_menu');
+    }
+
+    fields.forEach(field => {
+      if (field === 'persistent_menu') {
+        settings[field].map(item => {
+          item.call_to_actions.map((button, index) => {
+            if (button.type === 'web_url') {
+              delete button.payload;
+              item.call_to_actions[index] = _.pick(button, [
+                'title',
+                'url',
+                'webview_height_ratio',
+                'type'
+              ]);
+            } else {
+              item.call_to_actions[index] = _.pick(button, [
+                'title',
+                'type',
+                'payload'
+              ]);
+            }
+          });
+        });
+        if (!validatePersistentMenu(settings[field])) {
+          m.push('Persistent Menu không hợp lệ');
+        }
+      }
+
+      if (field === 'greeting') {
+        if (!validateGreeting(settings[field])) {
+          m.push('Tin nhắn chào mừng không hợp lệ');
+        }
+      }
+
+      if (field === 'get_started') {
+        if (!validateGetStarted(settings[field])) {
+          m.push('Nút bắt đầu chào mừng không hợp lệ');
+        }
+      }
+    });
+    if (m.length > 0) {
+      return next(_createError('Cài đặt không hợp lệ', 500, m));
+    }
+    fields.forEach(field => {
+      _.set(page.settings, field, settings[fields]);
+    });
+    _log(settings);
     // sync to facebook
-    task.push(updateMessagerProfile(page.id, page.access_token, page.settings));
+    task.push(updateMessagerProfile(page.id, page.access_token, settings));
     task.push(
       updatePage(
         {
@@ -218,10 +281,14 @@ async function handleUpdateMessengerProfile(req, res, next) {
     );
     const result = await Promise.all(task);
     console.log(result);
-    return res.json(result);
+    if (!result[0] || !result[1]) {
+      return next(_createError('Lỗi', 500, result));
+    } else {
+      return res.json(result);
+    }
   } catch (error) {
     _log('udpate messenger profile error : ', error);
-    throw _createError(error.message, 400);
+    next(_createError(error.message, 400, error));
   }
 }
 
@@ -232,17 +299,32 @@ async function handleUpdateMessengerProfile(req, res, next) {
  * @param { NextFuction } next
  */
 
-async function handleDeleteMessengerProfile(req, res, next) {
-  const { fields, pageId } = req.query;
-  try {
-    const page = await getPage({ ig: pageId, user_id: req.user._id });
-    // sync to facebook
-    const result = await deleteMessagerProfile(
-      page.id,
-      page.access_token,
-      fields
+async function handleDisableMessengerProfile(req, res, next) {
+  const { fields, page } = req.body;
+
+  if (fields.includes('persistent_menu') || fields.includes('get_started')) {
+    fields = fields.filter(
+      field => field !== 'persistent_menu' && field !== 'get_started'
     );
-    return res.json(result);
+    fields.push('get_started', 'persistent_menu');
+  }
+
+  try {
+    fields.forEach(field => {
+      page.settings['active_' + field] = false;
+    });
+    const task = [
+      deleteMessengerProfile(page.id, page.access_token, fields),
+      updatePage({ _id: page._id }, page)
+    ];
+    // sync to facebook
+    const results = await Promise.all(task);
+    _log(results);
+    if (results[0].error || !results[1]) {
+      return next(_createError('Lỗi', 500, { data: results }));
+    } else {
+      return res.json(results);
+    }
   } catch (error) {
     _log('Delete messenger profile error : ', error.message);
     throw _createError(error.message, 400);

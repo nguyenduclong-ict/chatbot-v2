@@ -1,12 +1,14 @@
+// get config to env
 require('dotenv').config();
+const config = require('./config');
+
 const lodash = require('lodash');
 const extraTool = require('express-extra-tool');
-const config = require('./config');
 extraTool.initGlobal({
   dirroot: __dirname,
   additions: [{ name: '_', value: lodash }]
 });
-
+Object.assign(process.env, config.env);
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');

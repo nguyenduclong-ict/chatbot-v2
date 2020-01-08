@@ -6,7 +6,7 @@ const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _.get(
   {}
 );
 const { parseQuery } = require('express-extra-tool').functions;
-const { testFlow, sendBlock } = _rq('services/Facebook');
+const { testFlow, sendFlow, sendMessageBlock } = _rq('services/Facebook');
 
 const { getPage } = _rq('providers/PageProvider');
 const { getBlock } = _rq('providers/BlockProvider');
@@ -44,46 +44,70 @@ if (!(APP_SECRET && VERIFY_TOKEN && SERVER_URL)) {
  */
 
 async function handleReciveEvent(req, res, next) {
-  res.sendStatus(200);
-  // Make sure this is a page subscription
-  const data = req.body;
-  if (data.object == 'page') {
-    // Iterate over each entry
-    // There may be multiple if batched
-    data.entry.forEach(function(pageEntry) {
-      var pageID = pageEntry.id;
-      var timeOfEvent = pageEntry.time;
-      // const pageInfo =
-      _log(pageEntry);
-      pageEntry.messaging.forEach(async message => {
-        console.log(message);
-        const senderId = message.sender.id;
-        const pageId = message.recipient.id;
-        // message send form plugin send to messenger
-        if (message.optin) {
-          const data = parseQuery(message.optin.ref, '+');
-          if (data.action === 'test-flow') {
-            console.log('handle test flow');
-            const { flow_id, user_id } = data;
-            testFlow(flow_id, senderId, user_id, pageId);
+  try {
+    res.sendStatus(200);
+    // Make sure this is a page subscription
+    const data = req.body;
+    if (data.object == 'page') {
+      // Iterate over each entry
+      // There may be multiple if batched
+      data.entry.forEach(function(pageEntry) {
+        var pageID = pageEntry.id;
+        var timeOfEvent = pageEntry.time;
+        // const pageInfo =
+        _log(pageEntry);
+        pageEntry.messaging.forEach(async message => {
+          console.log(message);
+          const senderId = message.sender.id;
+          const pageId = message.recipient.id;
+          // message send form plugin send to messenger
+          if (message.optin) {
+            const payload = parseQuery(message.optin.ref, '+');
+            if (payload.action === 'test-flow') {
+              const { flow_id, user_id } = payload;
+              try {
+                const rs = await testFlow(flow_id, senderId, user_id, pageId);
+                _log('Result: Handle test flow : \n', rs);
+              } catch (error) {
+                console.log('Error: Handle test flow : \n', error, '%error%');
+              }
+            }
           }
-        }
 
-        // handle post back
-        if (message.postback) {
-          const data = parseQuery(message.postback.payload, '+');
+          // handle post back
+          if (message.postback) {
+            const payload = parseQuery(message.postback.payload, '+');
+            if (payload.block) {
+              // send next block
+              const [block, page] = await Promise.all([
+                getBlock({ _id: payload.block }),
+                getPage({ id: pageId, user_id: payload.user_id })
+              ]);
+              if (!block) return; // no block found
+              switch (block.type) {
+                case 'message':
+                  sendMessageBlock(
+                    block,
+                    [senderId],
+                    page.access_token
+                  ).catch(e => _log(e, '%error%'));
+                  break;
 
-          if (data.block) {
-            // send next block
-            const [block, page] = await Promise.all([
-              getBlock({ _id: data.block }),
-              getPage({ id: pageId, user_id: data.user_id })
-            ]);
-            if (block) sendBlock(block, [senderId], page.access_token);
+                default:
+                  break;
+              }
+            } else if (payload.flow) {
+              console.log(payload);
+              // send flow
+              const { flow, user_id } = payload;
+              sendFlow(flow, senderId, user_id, pageId);
+            }
           }
-        }
+        });
       });
-    });
+    }
+  } catch (error) {
+    _log(error, '%error%');
   }
 }
 
