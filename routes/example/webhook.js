@@ -8,11 +8,8 @@ const { getApp } = _rq('/providers/Example/AppProvider');
  * setup is the same token used here.
  *
  */
-router.get('/', async function(req, res, next) {
-  const page = await getTestPage(
-    { page_id: req.params.id || '104374497763853' },
-    ['app_id']
-  );
+router.get('/:id', async function(req, res, next) {
+  const page = await getTestPage({ page_id: req.params.id }, ['app_id']);
   const app = page.app_id;
   if (!app) return res.sendStatus(403);
   if (
@@ -34,7 +31,7 @@ router.get('/', async function(req, res, next) {
  * https://developers.facebook.com/docs/messenger-platform/product-overview/setup#subscribe_app
  *
  */
-router.post('/', function(req, res) {
+router.post('/:id', function(req, res) {
   // Assume all went well.
   //
   // You must send back a 200, within 20 seconds, to let us know you've
