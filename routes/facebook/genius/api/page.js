@@ -37,7 +37,7 @@ router.post('/sync-off', handleDisableMessengerProfile);
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleGetListPage(req, res, next) {
@@ -61,7 +61,7 @@ async function handleGetListPage(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleGetPage(req, res, next) {
@@ -79,7 +79,7 @@ async function handleGetPage(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleCreatePage(req, res, next) {
@@ -98,7 +98,7 @@ async function handleCreatePage(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleUpdatePage(req, res, next) {
@@ -117,7 +117,7 @@ async function handleUpdatePage(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleUpdateManyPage(req, res, next) {
@@ -142,7 +142,7 @@ async function handleUpdateManyPage(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleDeletePage(req, res, next) {
@@ -160,7 +160,7 @@ async function handleDeletePage(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleDeleteManyPage(req, res, next) {
@@ -182,7 +182,7 @@ async function handleDeleteManyPage(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleDeleteManyPage(req, res, next) {
@@ -204,7 +204,7 @@ async function handleDeleteManyPage(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleUpdateMessengerProfile(req, res, next) {
@@ -296,7 +296,7 @@ async function handleUpdateMessengerProfile(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleDisableMessengerProfile(req, res, next) {

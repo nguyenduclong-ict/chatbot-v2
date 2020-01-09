@@ -19,7 +19,7 @@ router.put('/update', handleUpdateManyCustomer);
  * Crawl all user facebook
  * @param {express.request} req
  * @param {express.response} res
- * @param {NextFuction} next
+ * @param {NextFunction} next
  */
 async function postCrawlCustomer(req, res, next) {
   const { pageId } = req.body;
@@ -51,7 +51,7 @@ async function postCrawlCustomer(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param {express.response} res
- * @param {NextFuction} next
+ * @param {NextFunction} next
  */
 
 async function getListCustomer(req, res, next) {
@@ -77,7 +77,7 @@ async function getListCustomer(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param {express.response} res
- * @param {NextFuction} next
+ * @param {NextFunction} next
  */
 async function handleUpdateManyCustomer(req, res, next) {
   try {

@@ -1,35 +1,23 @@
-__dirroot = __dirroot || '/Users/longn/Code/work/webhook';
-var express = require('express');
-var router = express.Router();
+const router = require('express').Router();
 var request = require('request');
-
-const config = {
-  PAGE_ACCESS_TOKEN: '',
-  VERIFY_TOKEN: '',
-  APP_SECRET: '',
-  SERVER_URL: ''
-};
-
-/*
- * Be sure to setup your config values before running this code. You can
- * set them using environment variables or modifying the config file in /config.
- *
- */
-
-if (!(APP_SECRET && VERIFY_TOKEN && PAGE_ACCESS_TOKEN && SERVER_URL)) {
-  console.error('Missing config values');
-  process.exit(1);
-}
+const { getTestPage } = _rq('/providers/Example/TestPageProvider');
+const { getApp } = _rq('/providers/Example/AppProvider');
 
 /*
  * Use your own validation token. Check that the token used in the Webhook
  * setup is the same token used here.
  *
  */
-router.get('/webhook', function(req, res) {
+router.get('/', async function(req, res, next) {
+  const page = await getTestPage(
+    { page_id: req.params.id || '104374497763853' },
+    ['app_id']
+  );
+  const app = page.app_id;
+  if (!app) return res.sendStatus(403);
   if (
     req.query['hub.mode'] === 'subscribe' &&
-    req.query['hub.verify_token'] === VERIFY_TOKEN
+    req.query['hub.verify_token'] === app.verify_token
   ) {
     _log('Validating webhook');
     res.status(200).send(req.query['hub.challenge']);
@@ -46,42 +34,45 @@ router.get('/webhook', function(req, res) {
  * https://developers.facebook.com/docs/messenger-platform/product-overview/setup#subscribe_app
  *
  */
-router.post('/webhook', function(req, res) {
+router.post('/', function(req, res) {
+  // Assume all went well.
+  //
+  // You must send back a 200, within 20 seconds, to let us know you've
+  // successfully received the callback. Otherwise, the request will time out.
+  res.sendStatus(200);
+
   var data = req.body;
   _log(data);
   // Make sure this is a page subscription
   if (data.object == 'page') {
     // Iterate over each entry
     // There may be multiple if batched
-    data.entry.forEach(function(pageEntry) {
+    data.entry.forEach(async function(pageEntry) {
       var pageID = pageEntry.id;
       var timeOfEvent = pageEntry.time;
-
+      const page = await getTestPage({ page_id: pageID }, ['app_id']);
+      if (!page) return;
+      const accessToken = page.page_access_token;
+      const serverUrl = page.app_id.server_url;
       // Iterate over each messaging event
       pageEntry.messaging.forEach(function(messagingEvent) {
         if (messagingEvent.optin) {
-          receivedAuthentication(messagingEvent);
+          receivedAuthentication(messagingEvent, accessToken);
         } else if (messagingEvent.message) {
-          receivedMessage(messagingEvent);
+          receivedMessage(messagingEvent, accessToken, serverUrl);
         } else if (messagingEvent.delivery) {
-          receivedDeliveryConfirmation(messagingEvent);
+          receivedDeliveryConfirmation(messagingEvent, accessToken);
         } else if (messagingEvent.postback) {
-          receivedPostback(messagingEvent);
+          receivedPostback(messagingEvent, accessToken);
         } else if (messagingEvent.read) {
-          receivedMessageRead(messagingEvent);
+          receivedMessageRead(messagingEvent, accessToken);
         } else if (messagingEvent.account_linking) {
-          receivedAccountLink(messagingEvent);
+          receivedAccountLink(messagingEvent, accessToken);
         } else {
           _log('Webhook received unknown messagingEvent: ', messagingEvent);
         }
       });
     });
-
-    // Assume all went well.
-    //
-    // You must send back a 200, within 20 seconds, to let us know you've
-    // successfully received the callback. Otherwise, the request will time out.
-    res.sendStatus(200);
   }
 });
 
@@ -116,7 +107,7 @@ router.get('/authorize', function(req, res) {
  * https://developers.facebook.com/docs/graph-api/webhooks#setup
  *
  */
-function verifyRequestSignature(req, res, buf) {
+function verifyRequestSignature(req, res, buf, appSecret) {
   var signature = req.headers['x-hub-signature'];
 
   if (!signature) {
@@ -129,7 +120,7 @@ function verifyRequestSignature(req, res, buf) {
     var signatureHash = elements[1];
 
     var expectedHash = crypto
-      .createHmac('sha1', APP_SECRET)
+      .createHmac('sha1', appSecret)
       .update(buf)
       .digest('hex');
 
@@ -147,7 +138,7 @@ function verifyRequestSignature(req, res, buf) {
  * https://developers.facebook.com/docs/messenger-platform/webhook-reference/authentication
  *
  */
-function receivedAuthentication(event) {
+function receivedAuthentication(event, accessToken) {
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
   var timeOfAuth = event.timestamp;
@@ -170,7 +161,7 @@ function receivedAuthentication(event) {
 
   // When an authentication is received, we'll send a message back to the sender
   // to let them know it was successful.
-  sendTextMessage(senderID, 'Authentication successful');
+  sendTextMessage(senderID, 'Authentication successful', accessToken);
 }
 
 /*
@@ -187,7 +178,7 @@ function receivedAuthentication(event) {
  * then we'll simply confirm that we've received the attachment.
  *
  */
-function receivedMessage(event) {
+function receivedMessage(event, accessToken, serverUrl) {
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
   var timeOfMessage = event.timestamp;
@@ -228,7 +219,7 @@ function receivedMessage(event) {
       quickReplyPayload
     );
 
-    sendTextMessage(senderID, 'Quick reply tapped');
+    sendTextMessage(senderID, 'Quick reply tapped', accessToken);
     return;
   }
 
@@ -244,71 +235,80 @@ function receivedMessage(event) {
     ) {
       case 'hello':
       case 'hi':
-        sendHiMessage(senderID);
+        sendHiMessage(senderID, accessToken);
         break;
 
       case 'image':
-        requiresServerURL(sendImageMessage, [senderID]);
+        requiresServerURL(sendImageMessage, [senderID, accessToken, serverUrl]);
         break;
 
       case 'gif':
-        requiresServerURL(sendGifMessage, [senderID]);
+        requiresServerURL(sendGifMessage, [senderID, accessToken, serverUrl]);
         break;
 
       case 'audio':
-        requiresServerURL(sendAudioMessage, [senderID]);
+        requiresServerURL(sendAudioMessage, [senderID, accessToken, serverUrl]);
         break;
 
       case 'video':
-        requiresServerURL(sendVideoMessage, [senderID]);
+        requiresServerURL(sendVideoMessage, [senderID, accessToken, serverUrl]);
         break;
 
       case 'file':
-        requiresServerURL(sendFileMessage, [senderID]);
+        requiresServerURL(sendFileMessage, [senderID, accessToken, serverUrl]);
         break;
 
       case 'button':
-        sendButtonMessage(senderID);
+        sendButtonMessage(senderID, accessToken);
         break;
 
       case 'generic':
-        requiresServerURL(sendGenericMessage, [senderID]);
+        requiresServerURL(sendGenericMessage, [
+          senderID,
+          accessToken,
+          serverUrl
+        ]);
         break;
 
       case 'receipt':
-        requiresServerURL(sendReceiptMessage, [senderID]);
+        requiresServerURL(sendReceiptMessage, [
+          senderID,
+          accessToken,
+          serverUrl
+        ]);
         break;
 
       case 'quick reply':
-        sendQuickReply(senderID);
+        sendQuickReply(senderID, accessToken);
         break;
 
       case 'read receipt':
-        sendReadReceipt(senderID);
+        sendReadReceipt(senderID, accessToken);
         break;
 
       case 'typing on':
-        sendTypingOn(senderID);
+        sendTypingOn(senderID, accessToken);
         break;
 
       case 'typing off':
-        sendTypingOff(senderID);
+        sendTypingOff(senderID, accessToken);
         break;
 
       case 'account linking':
-        requiresServerURL(sendAccountLinking, [senderID]);
+        requiresServerURL(sendAccountLinking, [senderID, serverUrl]);
         break;
       case 'info':
         sendTextMessage(
           senderID,
-          `I'm Bot of Long' Master. I can help me contact with Master`
+          `I'm Bot of Long' Master. I can help me contact with Master`,
+          accessToken
         );
         break;
       default:
-        sendTextMessage(senderID, messageText);
+        sendTextMessage(senderID, messageText, accessToken);
     }
   } else if (messageAttachments) {
-    sendTextMessage(senderID, 'Message with attachment received');
+    sendTextMessage(senderID, 'Message with attachment received', accessToken);
   }
 }
 
@@ -343,7 +343,7 @@ function receivedDeliveryConfirmation(event) {
  * https://developers.facebook.com/docs/messenger-platform/webhook-reference/postback-received
  *
  */
-function receivedPostback(event) {
+function receivedPostback(event, accessToken) {
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
   var timeOfPostback = event.timestamp;
@@ -352,7 +352,7 @@ function receivedPostback(event) {
   // button for Structured Messages.
   var payload = event.postback.payload;
 
-  _log(
+  console.log(
     "Received postback for user %d and page %d with payload '%s' " + 'at %d',
     senderID,
     recipientID,
@@ -362,7 +362,7 @@ function receivedPostback(event) {
 
   // When a postback is called, we'll send a message back to the sender to
   // let them know it was successful
-  sendTextMessage(senderID, 'Postback called');
+  sendTextMessage(senderID, 'Postback called', accessToken);
 }
 
 /*
@@ -415,56 +415,37 @@ function receivedAccountLink(event) {
  * If users came here through testdrive, they need to configure the server URL
  * in default.json before they can access local resources likes images/videos.
  */
-function requiresServerURL(next, [recipientId, ...args]) {
-  if (SERVER_URL === 'to_be_set_manually') {
-    var messageData = {
-      recipient: {
-        id: recipientId
-      },
-      message: {
-        text: `
-          We have static resources like images and videos available to test, but you need to update the code you downloaded earlier to tell us your current server url.
-          1. Stop your node server by typing ctrl-c
-          2. Paste the result you got from running "lt —port 5000" into your config/default.json file as the "serverURL".
-          3. Re-run "node router.js"
-          Once you've finished these steps, try typing “video” or “image”.
-        `
-      }
-    };
-
-    callSendAPI(messageData);
-  } else {
-    next.apply(this, [recipientId, ...args]);
-  }
+function requiresServerURL(next, [recipientId, accessToken, ...args]) {
+  next.apply(this, [recipientId, accessToken, ...args]);
 }
 
-function sendHiMessage(recipientId) {
+function sendHiMessage(recipientId, accessToken) {
   var messageData = {
     recipient: {
       id: recipientId
     },
     message: {
       text: `
-        Hello I'm Bot. You can try out :
-          "quick reply", "receipt", 
-          "typing on", "typing off", 
-          "button", 
-          "video", 
-          "generic", "hi", 
-          "Hello", "info", or "image" 
-        command.
-      `
+          Hello I'm Bot. You can try out :
+            "quick reply", "receipt", 
+            "typing on", "typing off", 
+            "button", 
+            "video", 
+            "generic", "hi", 
+            "Hello", "info", or "image" 
+          command.
+        `
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send an image using the Send API.
  *
  */
-function sendImageMessage(recipientId) {
+function sendImageMessage(recipientId, accessToken, serverUrl) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -473,20 +454,20 @@ function sendImageMessage(recipientId) {
       attachment: {
         type: 'image',
         payload: {
-          url: SERVER_URL + '/assets/rift.png'
+          url: serverUrl + '/assets/rift.png'
         }
       }
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send a Gif using the Send API.
  *
  */
-function sendGifMessage(recipientId) {
+function sendGifMessage(recipientId, accessToken, serverUrl) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -495,20 +476,20 @@ function sendGifMessage(recipientId) {
       attachment: {
         type: 'image',
         payload: {
-          url: SERVER_URL + '/assets/instagram_logo.gif'
+          url: serverUrl + '/assets/instagram_logo.gif'
         }
       }
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send audio using the Send API.
  *
  */
-function sendAudioMessage(recipientId) {
+function sendAudioMessage(recipientId, accessToken, serverUrl) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -517,20 +498,20 @@ function sendAudioMessage(recipientId) {
       attachment: {
         type: 'audio',
         payload: {
-          url: SERVER_URL + '/assets/sample.mp3'
+          url: serverUrl + '/assets/sample.mp3'
         }
       }
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send a video using the Send API.
  *
  */
-function sendVideoMessage(recipientId) {
+function sendVideoMessage(recipientId, accessToken, serverUrl) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -539,20 +520,20 @@ function sendVideoMessage(recipientId) {
       attachment: {
         type: 'video',
         payload: {
-          url: SERVER_URL + '/assets/allofus480.mov'
+          url: serverUrl + '/assets/allofus480.mov'
         }
       }
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send a file using the Send API.
  *
  */
-function sendFileMessage(recipientId) {
+function sendFileMessage(recipientId, accessToken, serverUrl) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -561,20 +542,20 @@ function sendFileMessage(recipientId) {
       attachment: {
         type: 'file',
         payload: {
-          url: SERVER_URL + '/assets/test.txt'
+          url: serverUrl + '/assets/test.txt'
         }
       }
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send a text message using the Send API.
  *
  */
-function sendTextMessage(recipientId, messageText) {
+function sendTextMessage(recipientId, messageText, accessToken) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -585,14 +566,14 @@ function sendTextMessage(recipientId, messageText) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send a button message using the Send API.
  *
  */
-function sendButtonMessage(recipientId) {
+function sendButtonMessage(recipientId, accessToken) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -625,14 +606,14 @@ function sendButtonMessage(recipientId) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send a Structured Message (Generic Message type) using the Send API.
  *
  */
-function sendGenericMessage(recipientId) {
+function sendGenericMessage(recipientId, accessToken, serverUrl) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -647,7 +628,7 @@ function sendGenericMessage(recipientId) {
               title: 'rift',
               subtitle: 'Next-generation virtual reality',
               item_url: 'https://www.oculus.com/en-us/rift/',
-              image_url: SERVER_URL + '/assets/rift.png',
+              image_url: serverUrl + '/assets/rift.png',
               buttons: [
                 {
                   type: 'web_url',
@@ -665,7 +646,7 @@ function sendGenericMessage(recipientId) {
               title: 'touch',
               subtitle: 'Your Hands, Now in VR',
               item_url: 'https://www.oculus.com/en-us/touch/',
-              image_url: SERVER_URL + '/assets/touch.png',
+              image_url: serverUrl + '/assets/touch.png',
               buttons: [
                 {
                   type: 'web_url',
@@ -685,14 +666,14 @@ function sendGenericMessage(recipientId) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send a receipt message using the Send API.
  *
  */
-function sendReceiptMessage(recipientId) {
+function sendReceiptMessage(recipientId, accessToken) {
   // Generate a random receipt ID as the API requires a unique ID
   var receiptId = 'order' + Math.floor(Math.random() * 1000);
 
@@ -717,7 +698,7 @@ function sendReceiptMessage(recipientId) {
               quantity: 1,
               price: 599.0,
               currency: 'USD',
-              image_url: SERVER_URL + '/assets/riftsq.png'
+              image_url: serverUrl + '/assets/riftsq.png'
             },
             {
               title: 'Samsung Gear VR',
@@ -725,7 +706,7 @@ function sendReceiptMessage(recipientId) {
               quantity: 1,
               price: 99.99,
               currency: 'USD',
-              image_url: SERVER_URL + '/assets/gearvrsq.png'
+              image_url: serverUrl + '/assets/gearvrsq.png'
             }
           ],
           address: {
@@ -757,14 +738,14 @@ function sendReceiptMessage(recipientId) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send a message with Quick Reply buttons.
  *
  */
-function sendQuickReply(recipientId) {
+function sendQuickReply(recipientId, accessToken) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -791,14 +772,14 @@ function sendQuickReply(recipientId) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send a read receipt to indicate the message has been read
  *
  */
-function sendReadReceipt(recipientId) {
+function sendReadReceipt(recipientId, accessToken) {
   _log('Sending a read receipt to mark message as seen');
 
   var messageData = {
@@ -808,14 +789,14 @@ function sendReadReceipt(recipientId) {
     sender_action: 'mark_seen'
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Turn typing indicator on
  *
  */
-function sendTypingOn(recipientId) {
+function sendTypingOn(recipientId, accessToken) {
   _log('Turning typing indicator on');
 
   var messageData = {
@@ -825,14 +806,14 @@ function sendTypingOn(recipientId) {
     sender_action: 'typing_on'
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Turn typing indicator off
  *
  */
-function sendTypingOff(recipientId) {
+function sendTypingOff(recipientId, accessToken) {
   _log('Turning typing indicator off');
 
   var messageData = {
@@ -842,14 +823,14 @@ function sendTypingOff(recipientId) {
     sender_action: 'typing_off'
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
  * Send a message with the account linking call-to-action
  *
  */
-function sendAccountLinking(recipientId) {
+function sendAccountLinking(recipientId, serverUrl) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -863,7 +844,7 @@ function sendAccountLinking(recipientId) {
           buttons: [
             {
               type: 'account_link',
-              url: SERVER_URL + '/authorize'
+              url: serverUrl + '/authorize'
             }
           ]
         }
@@ -871,7 +852,7 @@ function sendAccountLinking(recipientId) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, accessToken);
 }
 
 /*
@@ -879,11 +860,11 @@ function sendAccountLinking(recipientId) {
  * get the message id in a response
  *
  */
-function callSendAPI(messageData) {
+function callSendAPI(messageData, accessToken) {
   request(
     {
       uri: 'https://graph.facebook.com/v2.6/me/messages',
-      qs: { access_token: PAGE_ACCESS_TOKEN },
+      qs: { access_token: accessToken },
       method: 'POST',
       json: messageData
     },
@@ -913,5 +894,4 @@ function callSendAPI(messageData) {
   );
 }
 
-// Export module
 module.exports = router;

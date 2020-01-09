@@ -30,7 +30,7 @@ router.post('/', handleDeleteManyBlock);
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleGetListBlock(req, res, next) {
@@ -55,7 +55,7 @@ async function handleGetListBlock(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handlePostQueryBlock(req, res, next) {
@@ -78,7 +78,7 @@ async function handlePostQueryBlock(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleGetBlock(req, res, next) {
@@ -96,7 +96,7 @@ async function handleGetBlock(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleCreateBlock(req, res, next) {
@@ -115,7 +115,7 @@ async function handleCreateBlock(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleUpdateBlock(req, res, next) {
@@ -152,7 +152,7 @@ async function handleUpdateBlock(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleUpdateManyBlock(req, res, next) {
@@ -177,7 +177,7 @@ async function handleUpdateManyBlock(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleDeleteBlock(req, res, next) {
@@ -195,7 +195,7 @@ async function handleDeleteBlock(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleDeleteManyBlock(req, res, next) {
@@ -217,7 +217,7 @@ async function handleDeleteManyBlock(req, res, next) {
  * Crawl all user facebook
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFuction } next
+ * @param { NextFunction } next
  */
 
 async function handleDeleteManyBlock(req, res, next) {

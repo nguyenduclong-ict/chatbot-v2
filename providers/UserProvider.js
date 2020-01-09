@@ -59,7 +59,6 @@ async function getUser(query) {
   let user = await User.findOne(query)
     .populate('roles')
     .lean();
-  if (user) user.roles = user.roles.map(e => e.value);
   return user;
 }
 

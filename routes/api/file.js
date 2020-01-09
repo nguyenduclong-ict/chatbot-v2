@@ -17,7 +17,7 @@ router.put('/update', mdGetUserInfo, putUpdateFile);
  * Logout
  * @param {express.request} req
  * @param {express.response} res
- * @param {NextFuction} next
+ * @param {NextFunction} next
  */
 async function getFile(req, res, next) {
   try {
