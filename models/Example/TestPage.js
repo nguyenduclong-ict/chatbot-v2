@@ -14,10 +14,6 @@ var schema = new Schema({
     ref: 'App',
     required: true
   },
-  verify_token: {
-    type: String,
-    required: true
-  },
   created: { type: Date, default: Date.now() }
 });
 
