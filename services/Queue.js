@@ -1,15 +1,17 @@
 const kue = require('kue');
-const queue = kue.createQueue();
 const axios = require('axios').default;
 const { graphUrl } = require(__dirroot + '/config').facebook;
 const Customer = require(__dirroot + '/models/Customer');
 const { sendMessage } = require('../utils/fbSender');
 // set options
-queue.setMaxListeners(100);
-
+const queue = kue.createQueue();
+queue.setMaxListeners(1000 * 1000);
+queue.on('error', function(err) {
+  console.log('Oops... ', err);
+});
 // declare queue
 queue.process('postfacebookapi', 20, postFacebookAPI);
-queue.process('crawl-customer', 5, crawlCustomerFacebook);
+queue.process('crawl-customer', 100, crawlCustomerFacebook);
 queue.process('send-broadcast-message', 20, sendBroadcastMessage);
 
 // Fuctions
@@ -39,6 +41,7 @@ function postFacebookAPI(job, done) {
  * @param {*} done
  */
 async function crawlCustomerFacebook(job, done) {
+  _log('adasdfasfd', '%error%');
   // user_id : id of user in server
   const {
     user_id,
@@ -55,7 +58,7 @@ async function crawlCustomerFacebook(job, done) {
     : {
         params: {
           limit,
-          fields: 'senders,updated_time,link',
+          fields: 'senders,updated_time,link,can_reply,snippet',
           access_token
         }
       };
@@ -71,6 +74,8 @@ async function crawlCustomerFacebook(job, done) {
       user_id,
       page_id_facebook
     );
+  } else {
+    _log('Crawl customer success for page : ', page_id_facebook);
   }
   done();
 }
@@ -112,6 +117,8 @@ function updateCustomer(data, user_id, page_id, page_id_facebook) {
     customer = {
       ...customer,
       type: 'facebook',
+      can_reply: conversation.can_reply,
+      snippet: conversation.snippet,
       user_id,
       page_id,
       page_id_facebook,

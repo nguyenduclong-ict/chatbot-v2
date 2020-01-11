@@ -8,7 +8,7 @@ var app = require('../app');
 var debug = require('debug')('webhook:server');
 var http = require('http');
 const { initSocketIO } = require('../services/Socket.IO');
-
+const queue = require('../services/Queue');
 /**
  * Get port from environment and store in Express.
  */
@@ -38,7 +38,10 @@ server.on('error', onError);
 server.on('listening', onListening);
 // Graceful stop
 process.on('SIGINT', () => {
-  process.exit();
+  queue.shutdown(5000, function(err) {
+    console.log('Kue shutdown: ', err || '');
+    process.exit(0);
+  });
 });
 
 /**

@@ -28,11 +28,8 @@ var schema = new Schema({
     }
   ],
   image: String,
-  can_send: {
-    // Người dùng có muốn nhận tin hay không
-    type: Boolean,
-    default: true
-  },
+  snippet: String,
+  can_reply: String, // Có thển nhắn tin hay không
   created: { type: Date, default: Date.now() }
 });
 

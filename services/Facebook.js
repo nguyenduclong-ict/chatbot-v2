@@ -3,7 +3,7 @@ const { getPage } = _rq('providers/PageProvider');
 const { getBlock } = _rq('providers/BlockProvider');
 const { socketio } = _rq('services/Socket.IO.js');
 const { graphUrl } = _rq('config').facebook;
-
+const { makeMessage } = require('../utils/facebook');
 // API
 const API_VERSION = 'v5.0';
 const endpoint = 'https://graph.facebook.com/' + API_VERSION;
@@ -18,7 +18,12 @@ async function testFlow(flow_id, senderId, user_id, page_id) {
     if (!startBlock) throw 'Not found StartBlock in flow ' + flow_id;
     let rs;
     if (startBlock.type === 'message') {
-      rs = await sendMessageBlock(startBlock, [senderId], page.access_token);
+      rs = await sendMessageBlock(
+        startBlock,
+        [senderId],
+        page.access_token,
+        []
+      );
     } else if (rs.type === 'action') {
     }
     socketio()
@@ -31,6 +36,7 @@ async function testFlow(flow_id, senderId, user_id, page_id) {
       });
     return rs;
   } catch (error) {
+    _log('aaa', error);
     const page = await getPage({ user_id, id: page_id });
     if (page)
       socketio()
@@ -67,7 +73,7 @@ async function sendFlow(flow_id, senderId, user_id, page_id) {
  * @param {string} access_token page access token
  * @param {[any]} pre above block sended
  */
-async function sendMessageBlock(block, senderIds, access_token, pre) {
+async function sendMessageBlock(block, senderIds, access_token, pre = []) {
   if (pre.length > 30) {
     return { success: true, message: 'stop with deep >= 30' };
   } else {

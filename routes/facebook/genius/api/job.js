@@ -26,7 +26,7 @@ router.delete('/:id', handleDeleteJob);
 router.post('/', handleDeleteManyJob);
 
 /**
- * Crawl all user facebook
+ 
  * @param { express.request } req
  * @param { express.response } res
  * @param { NextFunction } next
@@ -50,7 +50,7 @@ async function handleGetListJob(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { express.request } req
  * @param { express.response } res
  * @param { NextFunction } next
@@ -68,7 +68,7 @@ async function handleGetJob(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { express.request } req
  * @param { express.response } res
  * @param { NextFunction } next
@@ -87,7 +87,7 @@ async function handleCreateJob(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { express.request } req
  * @param { express.response } res
  * @param { NextFunction } next
@@ -106,7 +106,7 @@ async function handleUpdateJob(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { express.request } req
  * @param { express.response } res
  * @param { NextFunction } next
@@ -131,7 +131,7 @@ async function handleUpdateManyJob(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { express.request } req
  * @param { express.response } res
  * @param { NextFunction } next
@@ -149,7 +149,7 @@ async function handleDeleteJob(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { express.request } req
  * @param { express.response } res
  * @param { NextFunction } next
@@ -171,7 +171,7 @@ async function handleDeleteManyJob(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { express.request } req
  * @param { express.response } res
  * @param { NextFunction } next

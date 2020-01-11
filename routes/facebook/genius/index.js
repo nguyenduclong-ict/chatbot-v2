@@ -65,12 +65,7 @@ async function handleReciveEvent(req, res, next) {
             const payload = parseQuery(message.optin.ref, '+');
             if (payload.action === 'test-flow') {
               const { flow_id, user_id } = payload;
-              try {
-                const rs = await testFlow(flow_id, senderId, user_id, pageId);
-                _log('Result: Handle test flow : \n', rs);
-              } catch (error) {
-                console.log('Error: Handle test flow : \n', error, '%error%');
-              }
+              testFlow(flow_id, senderId, user_id, pageId);
             }
           }
 
@@ -89,7 +84,8 @@ async function handleReciveEvent(req, res, next) {
                   sendMessageBlock(
                     block,
                     [senderId],
-                    page.access_token
+                    page.access_token,
+                    []
                   ).catch(e => _log(e, '%error%'));
                   break;
 

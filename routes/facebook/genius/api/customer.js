@@ -16,7 +16,7 @@ router.get('/list-customer', getListCustomer);
 router.put('/update', handleUpdateManyCustomer);
 
 /**
- * Crawl all user facebook
+ 
  * @param {express.request} req
  * @param {express.response} res
  * @param {NextFunction} next
@@ -32,11 +32,19 @@ async function postCrawlCustomer(req, res, next) {
     access_token: page.access_token,
     limit: 500
   };
-  res.json({ status: 'doing' });
-  const task = queue.create('crawl-customer', params).save();
+  const task = queue
+    .create('crawl-customer', params)
+    .removeOnComplete(true)
+    .save(error => {
+      if (!error) {
+        res.json({ status: 'doing' });
+      } else {
+        res.status(500).send('Có lỗi');
+      }
+    });
+
   task.on('complete', () => {
     // job complete
-    _log('crawl customer for page ', pageId, 'complete');
     socketio()
       .to(page._id)
       .emit('notify', {
@@ -48,7 +56,7 @@ async function postCrawlCustomer(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { express.request } req
  * @param {express.response} res
  * @param {NextFunction} next
@@ -57,6 +65,9 @@ async function postCrawlCustomer(req, res, next) {
 async function getListCustomer(req, res, next) {
   try {
     const { query, options } = _validateQuery(req.query);
+    if (query.tags) {
+      query.tags = { $in: query.tags };
+    }
     _log(query, options);
     const result = await getManyCustomer(
       {
@@ -74,7 +85,7 @@ async function getListCustomer(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { express.request } req
  * @param {express.response} res
  * @param {NextFunction} next

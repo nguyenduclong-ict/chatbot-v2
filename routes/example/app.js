@@ -47,7 +47,6 @@ async function handleGetListApp(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
  * @param { router.request } req
  * @param { router.response } res
  * @param { NextFunction } next
@@ -65,7 +64,7 @@ async function handleGetApp(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { router.request } req
  * @param { router.response } res
  * @param { NextFunction } next
@@ -84,7 +83,7 @@ async function handleCreateApp(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { router.request } req
  * @param { router.response } res
  * @param { NextFunction } next
@@ -103,7 +102,7 @@ async function handleUpdateApp(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { router.request } req
  * @param { router.response } res
  * @param { NextFunction } next
@@ -128,7 +127,7 @@ async function handleUpdateManyApp(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { router.request } req
  * @param { router.response } res
  * @param { NextFunction } next
@@ -146,7 +145,7 @@ async function handleDeleteApp(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { router.request } req
  * @param { router.response } res
  * @param { NextFunction } next
@@ -168,7 +167,7 @@ async function handleDeleteManyApp(req, res, next) {
 }
 
 /**
- * Crawl all user facebook
+ 
  * @param { router.request } req
  * @param { router.response } res
  * @param { NextFunction } next

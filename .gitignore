@@ -13,3 +13,6 @@ yarn.lock
 
 # config
 config/index.js
+
+# public folder
+public/pages
