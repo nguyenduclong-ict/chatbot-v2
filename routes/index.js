@@ -1,8 +1,9 @@
 var express = require('express');
 var router = express.Router();
+const path = require('path');
 
-router.get('/app', (req, res) => {
-  res.render('index');
+router.get('/', (req, res, next) => {
+  res.sendFile(path.join(__dirroot, 'public', 'pages', 'index.html'));
 });
 
 router.get('/policy', (req, res) => {

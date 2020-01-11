@@ -12,10 +12,11 @@ const jwt = require('express-extra-tool').jwt;
 // auth
 const getUserInfo = _md('get-user-info');
 const { listPageOfUser } = _rq('providers/PageProvider');
-const { getUser, addUser } = _rq('providers/UserProvider');
+const { getUser, addUser, updateUser } = _rq('providers/UserProvider');
 // Route
 router.get('/me', getUserInfo, handleGetUserInfo);
 router.post('/login', postLogIn);
+router.put('/change-password', getUserInfo, putChangePassword);
 router.post('/logout', getUserInfo, postLogout);
 router.post('/signup', postSignUp);
 router.get('/refresh-token', getUserInfo, getRefreshToken);
@@ -96,6 +97,25 @@ async function postSignUp(req, res, next) {
   password = bcrypt.hashSync(password, salt);
   try {
     let user = await addUser({ email, password, username, info, roles });
+    return res.json(user);
+  } catch (error) {
+    // MError handle
+    return next(error);
+  }
+}
+
+/**
+ * SignUp
+ * @param {express.request} req
+ * @param {express.response} res
+ * @param {any} next
+ */
+
+async function putChangePassword(req, res, next) {
+  let { password } = req.body;
+  password = bcrypt.hashSync(password, salt);
+  try {
+    let user = await updateUser(req.user._id, { password });
     return res.json(user);
   } catch (error) {
     // MError handle
