@@ -670,7 +670,7 @@ function sendGenericMessage(recipientId, accessToken, serverUrl) {
  * Send a receipt message using the Send API.
  *
  */
-function sendReceiptMessage(recipientId, accessToken) {
+function sendReceiptMessage(recipientId, accessToken, serverUrl) {
   // Generate a random receipt ID as the API requires a unique ID
   var receiptId = 'order' + Math.floor(Math.random() * 1000);
 
