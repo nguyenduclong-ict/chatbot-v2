@@ -1,4 +1,4 @@
-const jwt = require('./JwtTokenService');
+const jwt = require('express-extra-tool').jwt;
 const redis = require('redis');
 const { driver, config } = require('../config').token;
 const tokens = {};
