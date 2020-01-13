@@ -83,6 +83,7 @@ async function handleCreateFlow(req, res, next) {
   try {
     const result = await createFlow(data);
     await createBlock({
+      user_id: req.user._id,
       flow_id: result._id,
       is_start: true,
       type: 'message',

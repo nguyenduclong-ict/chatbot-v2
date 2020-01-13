@@ -6,7 +6,9 @@ const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _.get(
   {}
 );
 const { parseQuery } = require('express-extra-tool').functions;
-const { testFlow, sendFlow, sendMessageBlock } = _rq('services/Facebook');
+const { testFlow, sendFlow, sendMessageBlock, sendActionBlock } = _rq(
+  'services/Facebook'
+);
 
 const { getPage } = _rq('providers/PageProvider');
 const { getBlock } = _rq('providers/BlockProvider');
@@ -88,7 +90,14 @@ async function handleReciveEvent(req, res, next) {
                     []
                   ).catch(e => _log(e, '%error%'));
                   break;
-
+                case 'action':
+                  sendActionBlock(
+                    block,
+                    [senderId],
+                    page.access_token,
+                    []
+                  ).catch(e => _log(e, '%error%'));
+                  break;
                 default:
                   break;
               }

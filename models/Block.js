@@ -8,6 +8,10 @@ var schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Flow'
   },
+  user_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
   type: {
     type: String,
     enum: ['message', 'action', 'condition', 'delay']

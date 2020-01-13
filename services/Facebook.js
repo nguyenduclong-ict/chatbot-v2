@@ -4,6 +4,8 @@ const { getBlock } = _rq('providers/BlockProvider');
 const { socketio } = _rq('services/Socket.IO.js');
 const { graphUrl } = _rq('config').facebook;
 const { makeMessage } = require('../utils/facebook');
+const { updateManyCustomer } = _rq('providers/CustomerProvider');
+
 // API
 const API_VERSION = 'v5.0';
 const endpoint = 'https://graph.facebook.com/' + API_VERSION;
@@ -63,6 +65,8 @@ async function sendFlow(flow_id, senderId, user_id, page_id) {
 
   if (startBlock.type === 'message') {
     return sendMessageBlock(startBlock, [senderId], page.access_token);
+  } else if (startBlock.type === 'action') {
+    return sendActionBlock(startBlock, [senderId], page.access_token);
   }
 }
 
@@ -73,7 +77,12 @@ async function sendFlow(flow_id, senderId, user_id, page_id) {
  * @param {string} access_token page access token
  * @param {[any]} pre above block sended
  */
-async function sendMessageBlock(block, senderIds, access_token, pre = []) {
+async function sendMessageBlock(
+  block,
+  senderIds = [],
+  access_token = '',
+  pre = []
+) {
   if (pre.length > 30) {
     return { success: true, message: 'stop with deep >= 30' };
   } else {
@@ -123,7 +132,9 @@ async function sendMessageBlock(block, senderIds, access_token, pre = []) {
           case 'message':
             sendMessageBlock(nextBlock, senderIds, access_token, pre);
             break;
-
+          case 'action':
+            sendActionBlock(nextBlock, senderIds, access_token, pre);
+            break;
           default:
             break;
         }
@@ -132,6 +143,100 @@ async function sendMessageBlock(block, senderIds, access_token, pre = []) {
     return { success: true, result, message: 'Send Block message success' };
   } catch (error) {
     throw _createError('Send Block message error', 500, {
+      success: false,
+      error
+    });
+  }
+}
+
+/**
+ *
+ * @param {object} block Block muốn gửi
+ * @param {[string]} senderIds Mảng id người nhận
+ * @param {string} access_token page access token
+ * @param {[any]} pre above block sended
+ */
+async function sendActionBlock(
+  block,
+  senderIds = [],
+  access_token = '',
+  pre = []
+) {
+  if (pre.length > 30) {
+    return { success: true, message: 'stop with deep >= 30' };
+  } else {
+    pre.push(block);
+  }
+  try {
+    // get block data if block is objectId
+    const tasks = [];
+    block.content.actions.forEach(action => {
+      switch (action.type) {
+        case 'add-tag':
+          tasks.push(
+            updateManyCustomer(
+              {
+                id: { $in: senderIds },
+                user_id: block.user_id
+              },
+              {
+                $addToSet: {
+                  tags: {
+                    $each: action.tags
+                  }
+                }
+              }
+            )
+          );
+          break;
+        case 'remove-tag':
+          tasks.push(
+            updateManyCustomer(
+              {
+                id: { $in: senderIds },
+                user_id: block.user_id
+              },
+              {
+                $pull: {
+                  tags: {
+                    $in: action.tags
+                  }
+                }
+              }
+            )
+          );
+          break;
+        default:
+          break;
+      }
+    });
+    result = await Promise.all(tasks);
+    // send next block
+    if (block.has_next_block && block.next_block_id) {
+      // get promise for Asynchronous
+      getBlock({ _id: block.next_block_id }).then(nextBlock => {
+        if (!nextBlock) _log('Next block not found');
+        if (pre.indexOf(nextBlock._id)) {
+          return {
+            success: true,
+            message: 'Recursive block => stop at ' + nextBlock._id
+          };
+        }
+        switch (nextBlock.type) {
+          case 'message':
+            sendMessageBlock(nextBlock, senderIds, access_token, pre);
+            break;
+          case 'action':
+            sendActionBlock(nextBlock, senderIds, access_token, pre);
+            break;
+          default:
+            break;
+        }
+      });
+    }
+    return { success: true, result, message: 'Send Block Action success' };
+  } catch (error) {
+    throw _createError('Send Block action error', 500, {
       success: false,
       error
     });
@@ -300,5 +405,6 @@ module.exports = {
   sendFlow,
   testFlow,
   sendMessage,
-  sendMessageBlock
+  sendMessageBlock,
+  sendActionBlock
 };
