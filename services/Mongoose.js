@@ -1,6 +1,6 @@
 const config = require('../config');
 const { host, user, pass, dbName, port } = config.mongodb;
-const UserRole = require('../models/UserRole');
+const { createUserRole } = require('../providers/UserRoleProvider');
 const mongoose = require('mongoose');
 
 function connectDatabase() {
@@ -21,27 +21,9 @@ function connectDatabase() {
 }
 
 function initUserRole() {
-  UserRole.updateOne(
-    { value: 'admin' },
-    { name: 'Admin', value: 'admin' },
-    {
-      upsert: true,
-      setDefaultsOnInsert: true,
-      new: true
-    }
-  );
-  UserRole.updateOne(
-    { value: 'manager' },
-    { name: 'Manager', value: 'manager' },
-    {
-      upsert: true,
-      setDefaultsOnInsert: true,
-      new: true
-    }
-  );
+  createUserRole({ name: 'Admin', value: 'admin' });
+  createUserRole({ name: 'Manager', value: 'manager' });
 }
-
-initUserRole();
 
 module.exports = {
   connectDatabase
