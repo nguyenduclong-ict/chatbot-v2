@@ -350,7 +350,9 @@ async function subscribeApp(pageId, access_token, subscribed_fields) {
     return { ...response.data, subscribed_fields };
   } catch (error) {
     _log('Subscribed App Error ', error.message);
-    return null;
+    throw _createError(
+      'Lỗi trong khi kích hoạt page. Bạn có thể cấp lại quyền cho app và thử lại!'
+    );
   }
 }
 
