@@ -65,6 +65,7 @@ app.use(handleError);
  */
 function handleError(err, req, res, next) {
   // set locals, only providing error in development
+  _log(err);
   if (err) {
     _log(err);
     res.locals.message = err.message;
