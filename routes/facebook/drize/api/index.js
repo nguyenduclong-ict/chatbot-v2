@@ -111,7 +111,7 @@ async function postAddPage(req, res) {
   }
 }
 
-async function postActivePage(req, res) {
+async function postActivePage(req, res, next) {
   try {
     const { page_id, subscribed_fields } = req.body;
     const page = await Page.findOne({ id: page_id, user_id: req.user._id });
@@ -140,7 +140,7 @@ async function postActivePage(req, res) {
     }
   } catch (error) {
     _log(error);
-    return _createError(error.message || 'Xảy ra lỗi', error.code || 500);
+    return next(_createError(error.message || 'Xảy ra lỗi', error.code || 500));
   }
 }
 
