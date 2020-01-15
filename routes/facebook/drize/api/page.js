@@ -266,9 +266,9 @@ async function handleUpdateMessengerProfile(req, res, next) {
       return next(_createError('Cài đặt không hợp lệ', 500, m));
     }
     fields.forEach(field => {
-      _.set(page.settings, field, settings[fields]);
+      _.set(page, ['settings', 'field'], settings[field]);
     });
-    _log(settings);
+    _log('ấdfas fsafas fdas', page);
     // sync to facebook
     task.push(updateMessagerProfile(page.id, page.access_token, settings));
     task.push(
