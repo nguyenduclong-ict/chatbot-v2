@@ -211,21 +211,20 @@ async function handleUpdateMessengerProfile(req, res, next) {
   const { page, fields } = req.body;
   try {
     const task = [];
-    const settings = _.pick(page.settings, fields);
     const m = [];
 
     if (fields.includes('persistent_menu') && !fields.includes('get_started')) {
-      settings.get_started = { payload: 'abc' };
       fields.push('get_started');
     }
 
     if (fields.includes('get_started')) {
-      settings.persistent_menu = _.pick(page.settings, 'persistent_menu');
       fields.push('persistent_menu');
     }
 
+    const settings = _.pick(page.settings, fields);
+
     fields.forEach(field => {
-      if (field === 'persistent_menu') {
+      if (field === 'persistent_menu' || field === 'get_started') {
         settings[field].map(item => {
           item.call_to_actions.map((button, index) => {
             if (button.type === 'web_url') {
@@ -245,20 +244,17 @@ async function handleUpdateMessengerProfile(req, res, next) {
             }
           });
         });
-        if (!validatePersistentMenu(settings[field])) {
+        if (!validatePersistentMenu(settings['persistent_menu'])) {
           m.push('Persistent Menu không hợp lệ');
+        }
+        if (!validateGetStarted(settings['get_started'])) {
+          m.push('Nút bắt đầu chào mừng không hợp lệ');
         }
       }
 
       if (field === 'greeting') {
         if (!validateGreeting(settings[field])) {
           m.push('Tin nhắn chào mừng không hợp lệ');
-        }
-      }
-
-      if (field === 'get_started') {
-        if (!validateGetStarted(settings[field])) {
-          m.push('Nút bắt đầu chào mừng không hợp lệ');
         }
       }
     });
