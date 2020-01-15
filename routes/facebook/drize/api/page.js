@@ -219,8 +219,8 @@ async function handleUpdateMessengerProfile(req, res, next) {
       fields.push('get_started');
     }
 
-    if (fields.includes('get_started') && !fields.includes('persistent_menu')) {
-      settings.persistent_menu = [];
+    if (fields.includes('get_started')) {
+      settings.persistent_menu = _.pick(page.settings, 'persistent_menu');
       fields.push('persistent_menu');
     }
 
