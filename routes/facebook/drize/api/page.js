@@ -268,7 +268,7 @@ async function handleUpdateMessengerProfile(req, res, next) {
     fields.forEach(field => {
       _.set(page, ['settings', 'field'], settings[field]);
     });
-    _log('ấdfas fsafas fdas', page);
+    _log('update profile facebook', JSON.stringify(settings));
     // sync to facebook
     task.push(updateMessagerProfile(page.id, page.access_token, settings));
     task.push(

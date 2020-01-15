@@ -136,7 +136,7 @@ async function postActivePage(req, res, next) {
         throw 'Xảy ra lỗi';
       }
     } else {
-      return _createError('Không tìm thấy Page', 404);
+      return next(_createError('Không tìm thấy Page', 404));
     }
   } catch (error) {
     _log(error);
@@ -144,7 +144,7 @@ async function postActivePage(req, res, next) {
   }
 }
 
-async function postDeActivePage(req, res) {
+async function postDeActivePage(req, res, next) {
   try {
     const { page_id } = req.body;
     const page = await Page.findOne({ id: page_id, user_id: req.user._id });
@@ -161,11 +161,11 @@ async function postDeActivePage(req, res) {
         throw 'Xảy ra lỗi';
       }
     } else {
-      return _createError('Không tìm thấy Page', 404);
+      return next(_createError('Không tìm thấy Page', 404));
     }
   } catch (error) {
     _log(error);
-    return _createError(error.message || 'Xảy ra lỗi', error.code || 500);
+    return next(_createError(error.message || 'Xảy ra lỗi', error.code || 500));
   }
 }
 
