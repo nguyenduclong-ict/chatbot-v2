@@ -225,7 +225,7 @@ async function handleUpdateMessengerProfile(req, res, next) {
 
     fields.forEach(field => {
       if (field === 'persistent_menu' || field === 'get_started') {
-        settings[field].map(item => {
+        settings['persistent_menu'].map(item => {
           item.call_to_actions.map((button, index) => {
             if (button.type === 'web_url') {
               delete button.payload;
@@ -253,7 +253,7 @@ async function handleUpdateMessengerProfile(req, res, next) {
       }
 
       if (field === 'greeting') {
-        if (!validateGreeting(settings[field])) {
+        if (!validateGreeting(settings['greeting'])) {
           m.push('Tin nhắn chào mừng không hợp lệ');
         }
       }

@@ -211,22 +211,21 @@ async function handleUpdateMessengerProfile(req, res, next) {
   const { page, fields } = req.body;
   try {
     const task = [];
-    const settings = _.pick(page.settings, fields);
     const m = [];
 
     if (fields.includes('persistent_menu') && !fields.includes('get_started')) {
-      settings.get_started = { payload: 'abc' };
       fields.push('get_started');
     }
 
-    if (fields.includes('get_started') && !fields.includes('persistent_menu')) {
-      settings.persistent_menu = [];
+    if (fields.includes('get_started')) {
       fields.push('persistent_menu');
     }
 
+    const settings = _.pick(page.settings, fields);
+
     fields.forEach(field => {
-      if (field === 'persistent_menu') {
-        settings[field].map(item => {
+      if (field === 'persistent_menu' || field === 'get_started') {
+        settings['persistent_menu'].map(item => {
           item.call_to_actions.map((button, index) => {
             if (button.type === 'web_url') {
               delete button.payload;
@@ -245,20 +244,17 @@ async function handleUpdateMessengerProfile(req, res, next) {
             }
           });
         });
-        if (!validatePersistentMenu(settings[field])) {
+        if (!validatePersistentMenu(settings['persistent_menu'])) {
           m.push('Persistent Menu không hợp lệ');
+        }
+        if (!validateGetStarted(settings['get_started'])) {
+          m.push('Nút bắt đầu chào mừng không hợp lệ');
         }
       }
 
       if (field === 'greeting') {
-        if (!validateGreeting(settings[field])) {
+        if (!validateGreeting(settings['greeting'])) {
           m.push('Tin nhắn chào mừng không hợp lệ');
-        }
-      }
-
-      if (field === 'get_started') {
-        if (!validateGetStarted(settings[field])) {
-          m.push('Nút bắt đầu chào mừng không hợp lệ');
         }
       }
     });
@@ -266,9 +262,9 @@ async function handleUpdateMessengerProfile(req, res, next) {
       return next(_createError('Cài đặt không hợp lệ', 500, m));
     }
     fields.forEach(field => {
-      _.set(page.settings, field, settings[fields]);
+      _.set(page, ['settings', 'field'], settings[field]);
     });
-    _log(settings);
+    _log('update profile facebook', JSON.stringify(settings));
     // sync to facebook
     task.push(updateMessagerProfile(page.id, page.access_token, settings));
     task.push(
