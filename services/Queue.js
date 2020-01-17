@@ -41,7 +41,6 @@ function postFacebookAPI(job, done) {
  * @param {*} done
  */
 async function crawlCustomerFacebook(job, done) {
-  _log('adasdfasfd', '%error%');
   // user_id : id of user in server
   const {
     user_id,

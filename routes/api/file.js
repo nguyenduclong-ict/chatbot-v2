@@ -22,7 +22,7 @@ router.put('/update', mdGetUserInfo, putUpdateFile);
 async function getFile(req, res, next) {
   try {
     let { filename, imgCode } = req.query;
-    const userId = verify(imgCode);
+    const userId = imgCode ? verify(imgCode) : null;
     let file = await File.findOne({ filename });
     if (!file) return next(_createError('File not found', 404));
     // Check permission access to file
@@ -38,7 +38,14 @@ async function getFile(req, res, next) {
           return res.send(buffer);
         });
       });
-    else return res.sendFile(filePath);
+    else
+      return res.download(filePath, filename, err => {
+        if (!err) {
+          _log('send file success', filename);
+        } else {
+          _log('send file error', filename, '%error%');
+        }
+      });
   } catch (error) {
     return next(error);
   }

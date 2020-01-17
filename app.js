@@ -82,6 +82,8 @@ function handleError(err, req, res, next) {
     if (isJson) {
       // render the error page
       res.status(err.status || 500).send(err.data || err.message);
+    } else if (err.isJson) {
+      res.status(err.status || 500).send(err.data || err.message);
     } else {
       res.status(err.status || 500);
       res.render('error');

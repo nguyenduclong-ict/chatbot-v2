@@ -28,6 +28,7 @@ async function testFlow(flow_id, senderId, user_id, page_id) {
       );
     } else if (rs.type === 'action') {
     }
+    _log(JSON.stringify(rs, null, 2));
     socketio()
       .to(page._id)
       .emit('notify', {
@@ -83,10 +84,11 @@ async function sendMessageBlock(
   access_token = '',
   pre = []
 ) {
+  _log(block, pre);
   if (pre.length > 30) {
     return { success: true, message: 'stop with deep >= 30' };
   } else {
-    pre.push(block);
+    pre.push(block._id);
   }
   try {
     // get block data if block is objectId
@@ -100,8 +102,8 @@ async function sendMessageBlock(
             if (message.type === 'delay') {
               return new Promise(resolve => {
                 setTimeout(() => {
-                  resolve('Delay ' + message.wait + ' miliseconds');
-                }, message.wait);
+                  resolve('Delay ' + message.wait * 1000 + ' miliseconds');
+                }, message.wait * 1000);
               }).then(result => [...chainResults, result]);
             } else {
               return sendMessage(
@@ -122,7 +124,8 @@ async function sendMessageBlock(
       // get promise for Asynchronous
       getBlock({ _id: block.next_block_id }).then(nextBlock => {
         if (!nextBlock) _log('Next block not found');
-        if (pre.indexOf(nextBlock._id)) {
+        if (pre.find(bId => bId.toString() === nextBlock._id.toString())) {
+          _log('Recursive block => stop at ' + nextBlock._id, '%warning%');
           return {
             success: true,
             message: 'Recursive block => stop at ' + nextBlock._id
@@ -165,7 +168,7 @@ async function sendActionBlock(
   if (pre.length > 30) {
     return { success: true, message: 'stop with deep >= 30' };
   } else {
-    pre.push(block);
+    pre.push(block._id);
   }
   try {
     // get block data if block is objectId
@@ -216,7 +219,8 @@ async function sendActionBlock(
       // get promise for Asynchronous
       getBlock({ _id: block.next_block_id }).then(nextBlock => {
         if (!nextBlock) _log('Next block not found');
-        if (pre.indexOf(nextBlock._id)) {
+        if (pre.find(bId => bId.toString() === nextBlock._id.toString())) {
+          _log('Recursive block => stop at ' + nextBlock._id, '%warning%');
           return {
             success: true,
             message: 'Recursive block => stop at ' + nextBlock._id

@@ -15,7 +15,7 @@ var schema = new Schema({
   },
   flow_id: {
     type: Schema.Types.ObjectId,
-    ref: 'Page'
+    ref: 'Flow'
   },
   delay: Schema.Types.Boolean,
   delay_time: Date,
@@ -35,15 +35,26 @@ var schema = new Schema({
       .map((e, i) => i)
   },
   action: {
-    type: Schema.Types.ObjectId, // tag with type = 'job'
-    ref: 'Tag',
-    required: 'action must not be null'
+    type: String,
+    enum: ['start_flow', 'comment', 'publish_post'],
+    required: true
   },
   target: {
-    type: {
-      send_to_all: Boolean,
-      send_to_tags: [Schema.Types.ObjectId],
-      send_to: [Schema.Types.ObjectId]
+    send_to_all: {
+      type: Boolean,
+      default: true
+    },
+    send_to_tags: {
+      type: [Schema.Types.ObjectId], // tag id
+      default: []
+    },
+    send_to: {
+      type: [Schema.Types.ObjectId], // id customer
+      default: []
+    },
+    exclude: {
+      type: [Schema.Types.ObjectId], // id customer
+      default: []
     }
   },
   status: {

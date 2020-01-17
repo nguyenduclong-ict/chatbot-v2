@@ -75,7 +75,7 @@ function makeMessage(card) {
       validateAttachment(card);
       message = {
         attachment: {
-          type: 'image',
+          type: 'audio',
           payload: {
             url: card.url,
             is_reusable: true
@@ -87,7 +87,7 @@ function makeMessage(card) {
       validateAttachment(card);
       message = {
         attachment: {
-          type: 'image',
+          type: 'video',
           payload: {
             url: card.url,
             is_reusable: true
@@ -99,7 +99,7 @@ function makeMessage(card) {
       validateAttachment(card);
       message = {
         attachment: {
-          type: 'image',
+          type: 'file',
           payload: {
             url: card.url,
             is_reusable: true

@@ -29,16 +29,15 @@ router.post('/', handleDeleteManyJob);
  
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFunction } next
+ * @param { express.next } next
  */
 
 async function handleGetListJob(req, res, next) {
   let { query, options } = _validateQuery(req.query);
-  console.log(query, options);
+  _log(query, options);
   try {
     query = _omit({
       ...query,
-      name: new RegExp(query.name),
       user_id: req.user._id
     });
     const result = await getManyJob(query, options);
@@ -53,7 +52,7 @@ async function handleGetListJob(req, res, next) {
  
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFunction } next
+ * @param { express.next } next
  */
 
 async function handleGetJob(req, res, next) {
@@ -71,7 +70,7 @@ async function handleGetJob(req, res, next) {
  
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFunction } next
+ * @param { express.next } next
  */
 
 async function handleCreateJob(req, res, next) {
@@ -90,7 +89,7 @@ async function handleCreateJob(req, res, next) {
  
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFunction } next
+ * @param { express.next } next
  */
 
 async function handleUpdateJob(req, res, next) {
@@ -109,7 +108,7 @@ async function handleUpdateJob(req, res, next) {
  
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFunction } next
+ * @param { express.next } next
  */
 
 async function handleUpdateManyJob(req, res, next) {
@@ -134,7 +133,7 @@ async function handleUpdateManyJob(req, res, next) {
  
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFunction } next
+ * @param { express.next } next
  */
 
 async function handleDeleteJob(req, res, next) {
@@ -152,7 +151,7 @@ async function handleDeleteJob(req, res, next) {
  
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFunction } next
+ * @param { express.next } next
  */
 
 async function handleDeleteManyJob(req, res, next) {
@@ -174,7 +173,7 @@ async function handleDeleteManyJob(req, res, next) {
  
  * @param { express.request } req
  * @param { express.response } res
- * @param { NextFunction } next
+ * @param { express.next } next
  */
 
 async function handleDeleteManyJob(req, res, next) {

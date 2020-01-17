@@ -23,18 +23,22 @@ function initSocketIO(http) {
 
       // join userId
       if (token) {
-        let tokenData = jwt.verify(token);
-        const user = await getUser({
-          email: tokenData.email,
-          username: tokenData.username
-        });
-        socket.join(user._id);
-        _log('socket join user ', user);
-        socket.emit('notify', {
-          type: 'success',
-          message: 'join ' + socket.id + ' to room("userId") : ' + user._id,
-          slient: true
-        });
+        try {
+          let tokenData = jwt.verify(token);
+          const user = await getUser({
+            email: tokenData.email,
+            username: tokenData.username
+          });
+          socket.join(user._id);
+          _log('socket join user ', user);
+          socket.emit('notify', {
+            type: 'success',
+            message: 'join ' + socket.id + ' to room("userId") : ' + user._id,
+            slient: true
+          });
+        } catch (error) {
+          _log('socket subscribe error', error);
+        }
       }
 
       // join pageId

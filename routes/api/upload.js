@@ -11,11 +11,14 @@ const multer = require('multer');
 const path = require('path');
 const uploadPath = process.env.UPLOAD_PATH || 'upload';
 const rootPath = process.env.ROOT_PATH || __dirroot;
-const MIME_TYPE_MAP = {
-  'image/png': 'png',
-  'image/jpeg': 'jpg',
-  'image/jpg': 'jpg'
-};
+const MIME_TYPE_MAP = [
+  /image\/*/,
+  /video\/*/,
+  /audio\/*/,
+  /\.zip/,
+  /text\/*/,
+  /application\/*/
+];
 // Storage
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -42,22 +45,17 @@ var storage = multer.diskStorage({
     cb(null, uPath);
   },
   filename: (req, file, cb) => {
-    if (!MIME_TYPE_MAP[file.mimetype])
-      return cb(new Error('Định dạng file không được hỗ trợ'), null);
-    else {
+    if (!MIME_TYPE_MAP.some(mimetype => mimetype.test(file.mimetype))) {
+      return cb(
+        _createError('Định dạng file không được hỗ trợ', 500, { isJson: true }),
+        null
+      );
+    } else {
       let r = Math.random()
         .toString(36)
         .substring(2);
-      cb(
-        null,
-        file.fieldname +
-          '-' +
-          Date.now() +
-          '-' +
-          r +
-          '.' +
-          MIME_TYPE_MAP[file.mimetype]
-      );
+      const ext = file.originalname.split('.').pop();
+      cb(null, file.fieldname + '-' + Date.now() + '-' + r + '.' + ext);
     }
   }
 });
@@ -71,7 +69,7 @@ var upload = multer({
 router.post('/files', upload.array('files', 10), postUploadFiles);
 
 // Upload array of file
-async function postUploadFiles(req, res) {
+async function postUploadFiles(req, res, next) {
   let promise = [];
   try {
     let { subOwner = [], tags = [], isPublic = true } = req.body;
