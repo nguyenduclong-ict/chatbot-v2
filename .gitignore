@@ -10,6 +10,7 @@ ecosystem*
 # npm
 package-lock.json
 yarn.lock
+yarn-error.log
 
 # config
 config/index.js
