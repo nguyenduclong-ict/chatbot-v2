@@ -36,14 +36,14 @@ async function getFile(req, res, next) {
       file.filePath = path.join(rootPath, file.path, file.filename);
     }
     // Send file to client
-    if (file.filetype.test(/image/))
+    if (/^image/.test(file.filetype)) {
       processImage(file, req.query).then(image => {
         image.getBuffer(jimp.MIME_JPEG, (err, buffer) => {
           res.set('Content-Type', jimp.MIME_JPEG);
           return res.send(buffer);
         });
       });
-    else
+    } else {
       return res.download(file.filePath, filename, err => {
         if (!err) {
           _log('send file success', filename);
@@ -51,6 +51,7 @@ async function getFile(req, res, next) {
           _log('send file error', filename, '%error%');
         }
       });
+    }
   } catch (error) {
     return next(error);
   }
