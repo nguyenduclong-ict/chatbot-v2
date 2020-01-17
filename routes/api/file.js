@@ -29,9 +29,14 @@ async function getFile(req, res, next) {
     if (!file.isPublic && userId != file.owner) {
       return next(_createError('You cannot access to file', 403));
     }
-    let filePath = path.join(rootPath, file.path, file.filename);
+
+    if (/^\//.test(file.path)) {
+      file.filePath = path.join(file.path, file.filename);
+    } else {
+      file.filePath = path.join(rootPath, file.path, file.filename);
+    }
     // Send file to client
-    if (file.filetype === 'image')
+    if (file.filetype.test(/image/))
       processImage(file, req.query).then(image => {
         image.getBuffer(jimp.MIME_JPEG, (err, buffer) => {
           res.set('Content-Type', jimp.MIME_JPEG);
@@ -39,7 +44,7 @@ async function getFile(req, res, next) {
         });
       });
     else
-      return res.download(filePath, filename, err => {
+      return res.download(file.filePath, filename, err => {
         if (!err) {
           _log('send file success', filename);
         } else {
@@ -104,8 +109,7 @@ async function putUpdateFile(req, res, next) {
 async function processImage(file, query) {
   console.log('send image to client');
   let { size, crop, scale } = query;
-  let filePath = path.join(rootPath, file.path, file.filename);
-  let image = await jimp.read(filePath);
+  let image = await jimp.read(file.filePath);
   let w = image.getWidth();
   let h = image.getHeight();
 
