@@ -10,7 +10,7 @@ router.middlewares = ['get-user-info'];
 const multer = require('multer');
 const path = require('path');
 const uploadPath = process.env.UPLOAD_PATH || 'upload';
-const rootPath = __dirroot;
+const rootPath = process.env.ROOT_PATH || __dirroot;
 const MIME_TYPE_MAP = [
   /image\/*/,
   /video\/*/,
@@ -41,7 +41,7 @@ var storage = multer.diskStorage({
         console.log('Created folder ...', path.join(pp));
       }
     });
-    _log('dirroot', __dirroot);
+    uPath = path.join(rootPath, uPath);
     _log('filePath', uPath);
     cb(null, uPath);
   },
