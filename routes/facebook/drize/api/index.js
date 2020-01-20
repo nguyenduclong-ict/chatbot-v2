@@ -69,11 +69,9 @@ async function postAddPage(req, res) {
         token_expired: expires_at,
         hidden: false
       };
-      return updatePage(
-        { id: pageData.id, user_id: req.user._id },
-        pageData,
-        true
-      );
+      return updatePage({ id: pageData.id, user_id: req.user._id }, pageData, {
+        upsert: true
+      });
     });
     // update lại danh sách page đã thêm nhưng không được cấp quyền
     tasks.push(
@@ -111,7 +109,7 @@ async function postAddPage(req, res) {
   }
 }
 
-async function postActivePage(req, res, next) {
+async function postActivePage(req, res) {
   try {
     const { page_id, subscribed_fields } = req.body;
     const page = await Page.findOne({ id: page_id, user_id: req.user._id });
@@ -136,15 +134,15 @@ async function postActivePage(req, res, next) {
         throw 'Xảy ra lỗi';
       }
     } else {
-      return next(_createError('Không tìm thấy Page', 404));
+      return _createError('Không tìm thấy Page', 404);
     }
   } catch (error) {
     _log(error);
-    return next(_createError(error.message || 'Xảy ra lỗi', error.code || 500));
+    return _createError(error.message || 'Xảy ra lỗi', error.code || 500);
   }
 }
 
-async function postDeActivePage(req, res, next) {
+async function postDeActivePage(req, res) {
   try {
     const { page_id } = req.body;
     const page = await Page.findOne({ id: page_id, user_id: req.user._id });
@@ -161,11 +159,11 @@ async function postDeActivePage(req, res, next) {
         throw 'Xảy ra lỗi';
       }
     } else {
-      return next(_createError('Không tìm thấy Page', 404));
+      return _createError('Không tìm thấy Page', 404);
     }
   } catch (error) {
     _log(error);
-    return next(_createError(error.message || 'Xảy ra lỗi', error.code || 500));
+    return _createError(error.message || 'Xảy ra lỗi', error.code || 500);
   }
 }
 

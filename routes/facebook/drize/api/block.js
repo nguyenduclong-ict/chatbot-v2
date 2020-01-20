@@ -102,6 +102,7 @@ async function handleGetBlock(req, res, next) {
 async function handleCreateBlock(req, res, next) {
   const data = req.body;
   data.user_id = req.user._id;
+  console.log(data);
   try {
     const result = await createBlock(data);
     return res.json(result);
