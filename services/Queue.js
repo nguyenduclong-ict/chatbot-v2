@@ -2,31 +2,59 @@ const kue = require('kue');
 const axios = require('axios').default;
 const { graphUrl } = require(__dirroot + '/config').facebook;
 const Customer = require(__dirroot + '/models/Customer');
-const { sendMessage } = require('../utils/fbSender');
+const { updateManyJob } = require('../providers/JobProvider');
+const { sendFlow } = require('./Facebook');
 // set options
 const queue = kue.createQueue();
 queue.setMaxListeners(1000 * 1000);
 queue.on('error', function(err) {
   console.log('Oops... ', err);
 });
-// declare queue
+
+// Declare queue
 queue.process('postfacebookapi', 20, postFacebookAPI);
 queue.process('crawl-customer', 100, crawlCustomerFacebook);
-queue.process('send-broadcast-message', 20, sendBroadcastMessage);
+queue.process('send-broadcast', 1000, sendBroadcast);
 
-// Fuctions
-
-function sendBroadcastMessage(job, done) {
-  const task = [];
-  const { access_token, message, senderIds } = job.data;
-  senderIds.forEach(senderId => {
-    task.push(sendMessage(access_token, senderId, message));
-  });
-  Promise.all(task).then(rs => {
-    _log(rs);
-  });
+/**
+ *
+ * @param {*} job
+ * @param {*} done
+ */
+function sendBroadcast(job, done) {
+  const tasks = [];
+  const { flow_id, senderIds, user_id, page_id, job_id, job_repeat } = job.data;
+  sendFlow(flow_id, senderIds, user_id, page_id)
+    .then(async rs => {
+      _log('send broadcast success', JSON.stringify(rs, null, 2));
+      // update job status
+      await updateManyJob(
+        { _id: job_id },
+        { $set: { status: job_repeat === 'none' ? 'complete' : 'active' } },
+        {
+          upsert: false
+        }
+      );
+      done();
+    })
+    .catch(async error => {
+      _log('send flow from broadcast error', error);
+      await updateManyJob(
+        { _id: job_id },
+        {
+          $set: {
+            status: 'error'
+          }
+        },
+        {
+          upsert: false
+        }
+      );
+      done();
+    });
 }
 
+//
 function postFacebookAPI(job, done) {
   const { url, data, params } = job.data;
   _log('sendMessage to ', { data });

@@ -4,7 +4,9 @@ const { getBlock } = _rq('providers/BlockProvider');
 const { socketio } = _rq('services/Socket.IO.js');
 const { graphUrl } = _rq('config').facebook;
 const { makeMessage } = require('../utils/facebook');
-const { updateManyCustomer } = _rq('providers/CustomerProvider');
+const { updateManyCustomer, getManyCustomer, updateCustomer } = _rq(
+  'providers/CustomerProvider'
+);
 
 // API
 const API_VERSION = 'v5.0';
@@ -56,7 +58,8 @@ async function testFlow(flow_id, senderId, user_id, page_id) {
   }
 }
 
-async function sendFlow(flow_id, senderId, user_id, page_id) {
+async function sendFlow(flow_id, senderIds, user_id, page_id) {
+  if (!Array.isArray(senderIds)) senderIds = [senderIds];
   // get start block
   const [page, startBlock] = await Promise.all([
     getPage({ user_id, id: page_id }),
@@ -65,9 +68,9 @@ async function sendFlow(flow_id, senderId, user_id, page_id) {
   if (!startBlock) throw 'Not found StartBlock in flow ' + flow_id;
 
   if (startBlock.type === 'message') {
-    return sendMessageBlock(startBlock, [senderId], page.access_token);
+    return sendMessageBlock(startBlock, senderIds, page.access_token);
   } else if (startBlock.type === 'action') {
-    return sendActionBlock(startBlock, [senderId], page.access_token);
+    return sendActionBlock(startBlock, senderIds, page.access_token);
   }
 }
 
@@ -205,6 +208,31 @@ async function sendActionBlock(
                     $in: action.tags
                   }
                 }
+              }
+            )
+          );
+          break;
+        case 'subscribe':
+          tasks.push(
+            updateManyCustomer(
+              {
+                id: { $in: senderIds },
+                user_id: block.user_id
+              },
+              {
+                is_subscribe: true
+              }
+            )
+          );
+          break;
+        case 'un-subscribe':
+          tasks.push(
+            updateCustomer(
+              {
+                id: senderIds[0]
+              },
+              {
+                is_subscribe: false
               }
             )
           );

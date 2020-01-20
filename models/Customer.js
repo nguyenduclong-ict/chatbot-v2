@@ -29,10 +29,13 @@ var schema = new Schema({
   ],
   image: String,
   snippet: String,
-  can_reply: String, // Có thển nhắn tin hay không
+  can_reply: Boolean, // Có thể nhắn tin hay không
+  is_subscribe: {
+    type: Boolean,
+    default: true
+  },
   created: { type: Date, default: Date.now() }
 });
-
 declareHook(schema, 'Customer');
 const Customer = mongoose.model('Customer', schema);
 

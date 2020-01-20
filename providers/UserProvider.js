@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { declareCRUD } = require('express-extra-tool').mongoose;
 const { getManyUserRole } = require('./UserRoleProvider');
 /**
  *
@@ -18,17 +19,14 @@ async function addUser({
   try {
     // check user roles
     let isBlock = false;
-    const userRoleData = await getManyUserRole(
-      {
-        value: {
-          $in: roles
-        }
-      },
-      {}
-    );
+    const userRoleData = await getManyUserRole({
+      value: {
+        $in: roles
+      }
+    });
     const docs = userRoleData.data;
     if (docs.length < roles.length) throw new Error('Roles not exits');
-    if (docs.some(e => e.level === 0)) isBlock = true;
+    if (docs.some(e => e.level === 0 || e.value === 'manager')) isBlock = true;
     const data = {
       username,
       password,
@@ -92,6 +90,7 @@ async function updateUser(_id, data) {
 }
 
 module.exports = {
+  ...declareCRUD(User, 'User'),
   addUser,
   updateUser,
   getUser

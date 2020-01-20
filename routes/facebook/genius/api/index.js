@@ -69,11 +69,9 @@ async function postAddPage(req, res) {
         token_expired: expires_at,
         hidden: false
       };
-      return updatePage(
-        { id: pageData.id, user_id: req.user._id },
-        pageData,
-        true
-      );
+      return updatePage({ id: pageData.id, user_id: req.user._id }, pageData, {
+        upsert: true
+      });
     });
     // update lại danh sách page đã thêm nhưng không được cấp quyền
     tasks.push(

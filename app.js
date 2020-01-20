@@ -18,15 +18,24 @@ const cors = require('cors');
 var app = express();
 
 // Services
-require('./services/Queue');
+const Queue = require('./services/Queue');
+const kue = require('kue');
+Queue.removeAllListeners();
+Queue.active(function(err, ids) {
+  ids.forEach(function(id) {
+    kue.Job.get(id, function(err, job) {
+      // Your application should check if job is a stuck one
+      job.remove();
+    });
+  });
+});
 // cronjob
-// const Cron = require('./services/Cron');
-// const cronjobs = [];
-// // const cronjobs = ['checkBroadCastMessage'];
-// Cron.filter(e => cronjobs.includes(e.name)).forEach(item => {
-//   _log('Start cronjob ' + item.name);
-//   item.job.start();
-// });
+const Cron = require('./services/Cron');
+const cronjobs = ['broadcast-job'];
+Cron.filter(e => cronjobs.includes(e.name)).forEach(item => {
+  _log('Start cronjob ' + item.name);
+  item.job.start();
+});
 
 // database
 require('./services/Mongoose').connectDatabase();
@@ -41,8 +50,8 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(cors());
 app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ extended: true, limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 

@@ -63,7 +63,8 @@ var storage = multer.diskStorage({
 
 // Init upload
 var upload = multer({
-  storage: storage
+  storage: storage,
+  limits: { fileSize: '50mb' }
 });
 
 // Route
