@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const APP_NAME = 'drize';
+const APP_NAME = 'genius';
 const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _.get(
   _rq('config'),
   ['facebook', APP_NAME],

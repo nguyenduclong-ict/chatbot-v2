@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { get } = require('lodash');
 const { socketio } = _rq('services/Socket.IO.js');
 
-const APP_NAME = 'drize';
+const APP_NAME = 'genius';
 const config = _rq('/config');
 const { APP_ID, APP_SECRET } = get(config, ['facebook', APP_NAME]);
 
