@@ -22,13 +22,9 @@ async function testFlow(flow_id, senderId, user_id, page_id) {
     if (!startBlock) throw 'Not found StartBlock in flow ' + flow_id;
     let rs;
     if (startBlock.type === 'message') {
-      rs = await sendMessageBlock(
-        startBlock,
-        [senderId],
-        page.access_token,
-        []
-      );
+      rs = await sendMessageBlock(startBlock, [senderId], page.access_token);
     } else if (rs.type === 'action') {
+      rs = await sendActionBlock(startBlock, [senderId], page.access_token);
     }
     _log(JSON.stringify(rs, null, 2));
     socketio()
