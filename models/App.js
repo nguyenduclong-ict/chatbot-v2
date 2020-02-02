@@ -23,6 +23,10 @@ var schema = new Schema({
     type: String,
     enum: ['facebook', 'zalo', 'instagram']
   },
+  mode: {
+    type: String,
+    enum: ['main', 'preparatory']
+  },
   created: { type: Date, default: Date.now() }
 });
 

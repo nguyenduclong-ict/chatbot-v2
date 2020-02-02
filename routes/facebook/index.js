@@ -1,10 +1,4 @@
 const router = require('express').Router();
-const APP_NAME = 'genius';
-const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _.get(
-  _rq('config'),
-  ['facebook', APP_NAME],
-  {}
-);
 const { parseQuery } = require('express-extra-tool').functions;
 const { testFlow, sendFlow, sendMessageBlock, sendActionBlock } = _rq(
   'services/Facebook'
@@ -19,16 +13,6 @@ const { getBlock } = _rq('providers/BlockProvider');
 
 router.post('/webhook', handleReciveEvent);
 router.get('/webhook', handleWeehookVerify);
-
-/*
- * Be sure to setup your config values before running this code. You can
- * set them using environment variables or modifying the config file in /config.
- *
- */
-if (!(APP_SECRET && VERIFY_TOKEN && SERVER_URL)) {
-  _log('Missing config values');
-  process.exit(1);
-}
 
 /*
  * All callbacks for Messenger are POST-ed. They will be sent to the same
@@ -124,15 +108,17 @@ async function handleReciveEvent(req, res, next) {
  * @param {express.response} res
  */
 
-function handleWeehookVerify(req, res) {
+async function handleWeehookVerify(req, res) {
   let mode = req.query['hub.mode'];
   let token = req.query['hub.verify_token'];
   let challenge = req.query['hub.challenge'];
-
+  // get app main
+  let app = await getApp({ mode: 'main' });
+  if (!app) return res.sendStatus(403);
   // Check if a token and mode were sent
   if (mode && token) {
     // Check the mode and token sent are correct
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    if (mode === 'subscribe' && token === app.verify_token) {
       // Respond with 200 OK and challenge token from the request
       _log('WEBHOOK_VERIFIED');
       res.status(200).send(challenge);

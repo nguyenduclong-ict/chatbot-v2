@@ -29,6 +29,7 @@ async function testFlow(flow_id, senderId, user_id, page_id) {
         []
       );
     } else if (rs.type === 'action') {
+      sendActionBlock(startBlock, [senderId], page.access_token, []);
     }
     _log(JSON.stringify(rs, null, 2));
     socketio()
