@@ -151,6 +151,7 @@ function updateCustomer(data, user_id, page_id, page_id_facebook) {
       page_id,
       page_id_facebook,
       updated_time: conversation.updated_time,
+      is_subscribe: true,
       link: conversation.link
     };
     tasks.push(
