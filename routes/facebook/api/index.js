@@ -3,7 +3,7 @@ const { get } = require('lodash');
 const { socketio } = _rq('services/Socket.IO.js');
 
 const config = _rq('/config');
-const { APP_ID, APP_SECRET } = get(config, ['facebook']);
+const { APP_ID, APP_SECRET } = get(config, ['facebook'], {});
 
 const moment = require('moment');
 const { updateUser } = _rq('/providers/UserProvider');

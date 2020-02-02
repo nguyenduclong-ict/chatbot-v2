@@ -1,8 +1,7 @@
 const router = require('express').Router();
-const APP_NAME = 'drize';
 const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _.get(
   _rq('config'),
-  ['facebook', APP_NAME],
+  ['facebook'],
   {}
 );
 const { parseQuery } = require('express-extra-tool').functions;
@@ -19,16 +18,6 @@ const { getBlock } = _rq('providers/BlockProvider');
 
 router.post('/webhook', handleReciveEvent);
 router.get('/webhook', handleWeehookVerify);
-
-/*
- * Be sure to setup your config values before running this code. You can
- * set them using environment variables or modifying the config file in /config.
- *
- */
-if (!(APP_SECRET && VERIFY_TOKEN && SERVER_URL)) {
-  _log('Missing config values');
-  process.exit(1);
-}
 
 /*
  * All callbacks for Messenger are POST-ed. They will be sent to the same
