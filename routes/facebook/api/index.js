@@ -80,7 +80,7 @@ async function postAddPage(req, res) {
           user_id: req.user._id,
           user_facebook_id: id
         },
-        { hidden: true, subscribed_fields: [] },
+        { hidden: true, subscribed_fields: [], access_token: '' },
         false
       )
     );
@@ -108,7 +108,7 @@ async function postAddPage(req, res) {
   }
 }
 
-async function postActivePage(req, res) {
+async function postActivePage(req, res, next) {
   try {
     const { page_id, subscribed_fields } = req.body;
     const page = await Page.findOne({ id: page_id, user_id: req.user._id });
@@ -133,22 +133,22 @@ async function postActivePage(req, res) {
         throw 'Xảy ra lỗi';
       }
     } else {
-      return _createError('Không tìm thấy Page', 404);
+      return next(_createError('Không tìm thấy Page', 404));
     }
   } catch (error) {
     _log(error);
-    return _createError(error.message || 'Xảy ra lỗi', error.code || 500);
+    return next(_createError(error.message || 'Xảy ra lỗi', error.code || 500));
   }
 }
 
-async function postDeActivePage(req, res) {
+async function postDeActivePage(req, res, next) {
   try {
     const { page_id } = req.body;
     const page = await Page.findOne({ id: page_id, user_id: req.user._id });
     if (page) {
       const result = await unSubscriedApp(page_id, page.access_token);
       // unsubscribe thành công
-      if (result.success) {
+      if (result && result.success) {
         await updatePage(
           { id: page_id, user_id: req.user._id },
           { ...page.toObject(), subscribed_fields: [], is_active: false }
@@ -158,11 +158,11 @@ async function postDeActivePage(req, res) {
         throw 'Xảy ra lỗi';
       }
     } else {
-      return _createError('Không tìm thấy Page', 404);
+      return next(_createError('Không tìm thấy Page', 404));
     }
   } catch (error) {
     _log(error);
-    return _createError(error.message || 'Xảy ra lỗi', error.code || 500);
+    return next(_createError(error.message || 'Xảy ra lỗi', error.code || 500));
   }
 }
 

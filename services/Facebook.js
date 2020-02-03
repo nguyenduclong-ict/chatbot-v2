@@ -377,7 +377,7 @@ async function subscribeApp(pageId, access_token, subscribed_fields) {
     );
     return { ...response.data, subscribed_fields };
   } catch (error) {
-    _log('Subscribed App Error ', error.message);
+    _log('Subscribed App Error ', error.message, { error }, '%error%');
     throw _createError(
       'Lỗi trong khi kích hoạt page. Bạn có thể cấp lại quyền cho app và thử lại!'
     );
@@ -390,7 +390,7 @@ async function unSubscriedApp(pageId, access_token) {
     const response = await axios.delete(endPoint, { params: { access_token } });
     return { ...response.data };
   } catch (error) {
-    _log('UnSubscribed App Error ', error.message);
+    _log('UnSubscribed App Error ', pageId, { error });
     return null;
   }
 }
