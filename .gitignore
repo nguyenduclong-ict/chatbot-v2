@@ -1,0 +1,24 @@
+.DS_Store
+
+# node_module
+node_modules/
+
+# env
+.env
+
+# pm2
+ecosystem*
+
+# npm
+package-lock.json
+yarn.lock
+yarn-error.log
+
+# config
+config/index.js
+
+# public folder
+public/pages
+
+#upload
+upload
