@@ -2,7 +2,7 @@ const jwt = require('express-extra-tool').jwt;
 const redis = require('redis');
 const { driver, config } = require('../config').token;
 const tokens = {};
-var client = redis.createClient();
+var client;
 
 function init() {
   if (driver === 'redis') {
