@@ -22,11 +22,6 @@ async function testFlow(flow_id, senderId, user_id, page_id) {
     if (!startBlock) throw 'Not found StartBlock in flow ' + flow_id;
     let rs;
     if (startBlock.type === 'message') {
-<<<<<<< HEAD
-      rs = await sendMessageBlock(startBlock, [senderId], page.access_token);
-    } else if (startBlock.type === 'action') {
-      rs = await sendActionBlock(startBlock, [senderId], page.access_token);
-=======
       rs = await sendMessageBlock(
         startBlock,
         [senderId],
@@ -35,7 +30,6 @@ async function testFlow(flow_id, senderId, user_id, page_id) {
       );
     } else if (rs.type === 'action') {
       sendActionBlock(startBlock, [senderId], page.access_token, []);
->>>>>>> f7d2d4e817cd37cbfc7318b755abc3a9d757eb08
     }
     _log(JSON.stringify(rs, null, 2));
     socketio()

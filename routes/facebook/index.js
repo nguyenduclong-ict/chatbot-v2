@@ -1,12 +1,4 @@
 const router = require('express').Router();
-<<<<<<< HEAD:routes/facebook/index.js
-const { VERIFY_TOKEN, APP_SECRET, SERVER_URL } = _.get(
-  _rq('config'),
-  ['facebook'],
-  {}
-);
-=======
->>>>>>> f7d2d4e817cd37cbfc7318b755abc3a9d757eb08:routes/facebook/drize/index.js
 const { parseQuery } = require('express-extra-tool').functions;
 const { testFlow, sendFlow, sendMessageBlock, sendActionBlock } = _rq(
   'services/Facebook'
