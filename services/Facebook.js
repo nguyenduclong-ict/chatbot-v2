@@ -22,14 +22,9 @@ async function testFlow(flow_id, senderId, user_id, page_id) {
     if (!startBlock) throw 'Not found StartBlock in flow ' + flow_id;
     let rs;
     if (startBlock.type === 'message') {
-      rs = await sendMessageBlock(
-        startBlock,
-        [senderId],
-        page.access_token,
-        []
-      );
-    } else if (rs.type === 'action') {
-      sendActionBlock(startBlock, [senderId], page.access_token, []);
+      rs = await sendMessageBlock(startBlock, [senderId], page.access_token);
+    } else if (startBlock.type === 'action') {
+      rs = await sendActionBlock(startBlock, [senderId], page.access_token);
     }
     _log(JSON.stringify(rs, null, 2));
     socketio()
@@ -382,7 +377,7 @@ async function subscribeApp(pageId, access_token, subscribed_fields) {
     );
     return { ...response.data, subscribed_fields };
   } catch (error) {
-    _log('Subscribed App Error ', error.message);
+    _log('Subscribed App Error ', error.message, { error }, '%error%');
     throw _createError(
       'Lỗi trong khi kích hoạt page. Bạn có thể cấp lại quyền cho app và thử lại!'
     );
@@ -395,7 +390,7 @@ async function unSubscriedApp(pageId, access_token) {
     const response = await axios.delete(endPoint, { params: { access_token } });
     return { ...response.data };
   } catch (error) {
-    _log('UnSubscribed App Error ', error.message);
+    _log('UnSubscribed App Error ', pageId, { error });
     return null;
   }
 }

@@ -138,6 +138,7 @@ async function handleJob(job) {
       }
     }
     const customers = (await getManyCustomer(customerQuery)).data;
+    _log('customer of job', customerQuery, customers);
     Queue.create('send-broadcast', {
       flow_id: job.flow_id,
       senderIds: customers.map(customer => customer.id),

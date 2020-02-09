@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Page = _rq('/models/Page');
-const Customer = _rq('/models/Customer');
 const { updateCustomer, getManyCustomer } = _rq('/providers/CustomerProvider');
 
 const queue = _rq('services/Queue');

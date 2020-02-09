@@ -1,12 +1,11 @@
 module.exports = {
   facebook: {
     graphUrl: 'https://graph.facebook.com/v5.0',
-    genius: {
-      VERIFY_TOKEN: 'longnd',
-      APP_SECRET: 'f63e4265769ac4b25ebd6abe95c73f01',
-      SERVER_URL: 'https://server-chatbot.fuzzy-gecko-36.telebit.io/',
-      APP_ID: '412923979642743'
-    }
+    graphVersion: 'v5.0',
+    VERIFY_TOKEN: 'longnd',
+    APP_SECRET: 'f63e4265769ac4b25ebd6abe95c73f01',
+    SERVER_URL: 'https://dev.chatbot.negoo.tech',
+    APP_ID: '412923979642743'
   },
   mongodb: {
     host: 'homestead',
@@ -16,10 +15,11 @@ module.exports = {
     pass: 'long@123'
   },
   env: {
+    PORT: 3001,
     NODE_ENV: 'development' // | development || production
   },
   token: {
-    driver: 'redis', // | none
+    driver: 'none', // | none | redis
     config: {
       host: 'localhost',
       port: 6379

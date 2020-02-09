@@ -23,7 +23,7 @@ queue.process('send-broadcast', 1000, sendBroadcast);
  */
 function sendBroadcast(job, done) {
   const { flow_id, senderIds, user_id, page_id, job_id, job_repeat } = job.data;
-  _log('send flow ', flow_id, 'to', senderIds);
+  _log('send broadcast message to ', senderIds);
   sendFlow(flow_id, senderIds, user_id, page_id)
     .then(async rs => {
       _log('send broadcast success', JSON.stringify(rs, null, 2));
@@ -151,6 +151,7 @@ function updateCustomer(data, user_id, page_id, page_id_facebook) {
       page_id,
       page_id_facebook,
       updated_time: conversation.updated_time,
+      is_subscribe: true,
       link: conversation.link
     };
     tasks.push(

@@ -62,7 +62,11 @@ async function handleReciveEvent(req, res, next) {
               // send next block
               const [block, page] = await Promise.all([
                 getBlock({ _id: payload.block }),
-                getPage({ id: pageId, user_id: payload.user_id })
+                getPage({
+                  id: pageId,
+                  user_id: payload.user_id,
+                  is_active: true
+                })
               ]);
               if (!block) return; // no block found
               switch (block.type) {
