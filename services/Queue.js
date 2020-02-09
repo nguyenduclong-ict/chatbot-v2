@@ -23,7 +23,11 @@ queue.process('send-broadcast', 1000, sendBroadcast);
  */
 function sendBroadcast(job, done) {
   const { flow_id, senderIds, user_id, page_id, job_id, job_repeat } = job.data;
+<<<<<<< HEAD
   _log('send broadcast message to ', senderIds);
+=======
+  _log('send flow ', flow_id, 'to', senderIds);
+>>>>>>> f7d2d4e817cd37cbfc7318b755abc3a9d757eb08
   sendFlow(flow_id, senderIds, user_id, page_id)
     .then(async rs => {
       _log('send broadcast success', JSON.stringify(rs, null, 2));
@@ -93,7 +97,7 @@ async function crawlCustomerFacebook(job, done) {
   const response = await axios.get(endpoint, options);
   const { data, paging } = response.data;
   updateCustomer(data, user_id, page_id, page_id_facebook);
-  if (paging.next) {
+  if (paging && paging.next) {
     await crawlNextCustomer(
       paging.next,
       access_token,

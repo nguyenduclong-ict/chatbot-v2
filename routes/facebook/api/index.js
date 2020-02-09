@@ -2,6 +2,10 @@ const router = require('express').Router();
 const { get } = require('lodash');
 const { socketio } = _rq('services/Socket.IO.js');
 
+<<<<<<< HEAD:routes/facebook/api/index.js
+=======
+const APP_NAME = 'genius';
+>>>>>>> f7d2d4e817cd37cbfc7318b755abc3a9d757eb08:routes/facebook/drize/api/index.js
 const config = _rq('/config');
 const { APP_ID, APP_SECRET } = get(config, ['facebook'], {});
 
