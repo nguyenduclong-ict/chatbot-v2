@@ -3,33 +3,25 @@ var express = require('express');
 var router = express.Router();
 var request = require('request');
 
-const config = {
-  PAGE_ACCESS_TOKEN: '',
-  VERIFY_TOKEN: '',
-  APP_SECRET: '',
-  SERVER_URL: ''
-};
-
-/*
- * Be sure to setup your config values before running this code. You can
- * set them using environment variables or modifying the config file in /config.
- *
- */
-
-if (!(APP_SECRET && VERIFY_TOKEN && PAGE_ACCESS_TOKEN && SERVER_URL)) {
-  console.error('Missing config values');
-  process.exit(1);
-}
+const { getPage } = _rq('providers/PageProvider');
+const { getApp } = _rq('providers/AppProvider');
 
 /*
  * Use your own validation token. Check that the token used in the Webhook
  * setup is the same token used here.
  *
  */
-router.get('/webhook', function(req, res) {
+router.get('/webhook/:appId', async function(req, res) {
+  const { appId } = req.params;
+  _log(appId);
+  const app = await getApp({
+    app_id: appId
+  });
+
   if (
+    app &&
     req.query['hub.mode'] === 'subscribe' &&
-    req.query['hub.verify_token'] === VERIFY_TOKEN
+    req.query['hub.verify_token'] === app.verify_token
   ) {
     _log('Validating webhook');
     res.status(200).send(req.query['hub.challenge']);
@@ -46,7 +38,8 @@ router.get('/webhook', function(req, res) {
  * https://developers.facebook.com/docs/messenger-platform/product-overview/setup#subscribe_app
  *
  */
-router.post('/webhook', function(req, res) {
+router.post('/webhook/:appId', function(req, res) {
+  const { appId } = req.params;
   var data = req.body;
   _log(data);
   // Make sure this is a page subscription
@@ -54,23 +47,27 @@ router.post('/webhook', function(req, res) {
     // Iterate over each entry
     // There may be multiple if batched
     data.entry.forEach(function(pageEntry) {
-      var pageID = pageEntry.id;
+      var pageId = pageEntry.id;
       var timeOfEvent = pageEntry.time;
 
       // Iterate over each messaging event
       pageEntry.messaging.forEach(function(messagingEvent) {
         if (messagingEvent.optin) {
-          receivedAuthentication(messagingEvent);
+          receivedAuthentication(
+            messagingEvent.messa,
+            messagingEvent.pageIdgingEvent,
+            pageId
+          );
         } else if (messagingEvent.message) {
-          receivedMessage(messagingEvent);
+          receivedMessage(messagingEvent, appId, pageId);
         } else if (messagingEvent.delivery) {
-          receivedDeliveryConfirmation(messagingEvent);
+          receivedDeliveryConfirmation(messagingEvent, appId, pageId);
         } else if (messagingEvent.postback) {
-          receivedPostback(messagingEvent);
+          receivedPostback(messagingEvent, appId, pageId);
         } else if (messagingEvent.read) {
-          receivedMessageRead(messagingEvent);
+          receivedMessageRead(messagingEvent, appId, pageId);
         } else if (messagingEvent.account_linking) {
-          receivedAccountLink(messagingEvent);
+          receivedAccountLink(messagingEvent, appId, pageId);
         } else {
           _log('Webhook received unknown messagingEvent: ', messagingEvent);
         }
@@ -147,7 +144,7 @@ function verifyRequestSignature(req, res, buf) {
  * https://developers.facebook.com/docs/messenger-platform/webhook-reference/authentication
  *
  */
-function receivedAuthentication(event) {
+function receivedAuthentication(event, pageId) {
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
   var timeOfAuth = event.timestamp;
@@ -187,7 +184,7 @@ function receivedAuthentication(event) {
  * then we'll simply confirm that we've received the attachment.
  *
  */
-function receivedMessage(event) {
+function receivedMessage(event, appId, pageId) {
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
   var timeOfMessage = event.timestamp;
@@ -203,7 +200,6 @@ function receivedMessage(event) {
 
   var isEcho = message.is_echo;
   var messageId = message.mid;
-  var appId = message.app_id;
   var metadata = message.metadata;
 
   // You may get a text or attachment but not both
@@ -244,68 +240,70 @@ function receivedMessage(event) {
     ) {
       case 'hello':
       case 'hi':
-        sendHiMessage(senderID);
+        sendHiMessage(senderID, appId, pageId);
         break;
 
       case 'image':
-        requiresServerURL(sendImageMessage, [senderID]);
+        sendImageMessage(senderID, appId, pageId);
         break;
 
       case 'gif':
-        requiresServerURL(sendGifMessage, [senderID]);
+        sendGifMessage(senderID, appId, pageId);
         break;
 
       case 'audio':
-        requiresServerURL(sendAudioMessage, [senderID]);
+        sendAudioMessage(senderID, appId, pageId);
         break;
 
       case 'video':
-        requiresServerURL(sendVideoMessage, [senderID]);
+        sendVideoMessage(senderID, appId, pageId);
         break;
 
       case 'file':
-        requiresServerURL(sendFileMessage, [senderID]);
+        sendFileMessage(senderID, appId, pageId);
         break;
 
       case 'button':
-        sendButtonMessage(senderID);
+        sendButtonMessage(senderID, appId, pageId);
         break;
 
       case 'generic':
-        requiresServerURL(sendGenericMessage, [senderID]);
+        sendGenericMessage(senderID, appId, pageId);
         break;
 
       case 'receipt':
-        requiresServerURL(sendReceiptMessage, [senderID]);
+        sendReadReceipt(senderID, appId, pageId);
         break;
 
       case 'quick reply':
-        sendQuickReply(senderID);
+        sendQuickReply(senderID, appId, pageId);
         break;
 
       case 'read receipt':
-        sendReadReceipt(senderID);
+        sendReadReceipt(senderID, appId, pageId);
         break;
 
       case 'typing on':
-        sendTypingOn(senderID);
+        sendTypingOn(senderID, appId, pageId);
         break;
 
       case 'typing off':
-        sendTypingOff(senderID);
+        sendTypingOff(senderID, appId, pageId);
         break;
 
       case 'account linking':
-        requiresServerURL(sendAccountLinking, [senderID]);
+        sendAccountLinking(senderId, appId, pageId);
         break;
       case 'info':
         sendTextMessage(
           senderID,
-          `I'm Bot of Long' Master. I can help me contact with Master`
+          `I'm Bot of Long' Master. I can help me contact with Master`,
+          appId,
+          pageId
         );
         break;
       default:
-        sendTextMessage(senderID, messageText);
+        sendTextMessage(senderID, messageText, appId, pageId);
     }
   } else if (messageAttachments) {
     sendTextMessage(senderID, 'Message with attachment received');
@@ -343,7 +341,18 @@ function receivedDeliveryConfirmation(event) {
  * https://developers.facebook.com/docs/messenger-platform/webhook-reference/postback-received
  *
  */
-function receivedPostback(event) {
+async function receivedPostback(event, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
+
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
   var timeOfPostback = event.timestamp;
@@ -362,7 +371,7 @@ function receivedPostback(event) {
 
   // When a postback is called, we'll send a message back to the sender to
   // let them know it was successful
-  sendTextMessage(senderID, 'Postback called');
+  sendTextMessage(senderID, 'Postback called', page.access_token);
 }
 
 /*
@@ -411,34 +420,17 @@ function receivedAccountLink(event) {
   );
 }
 
-/*
- * If users came here through testdrive, they need to configure the server URL
- * in default.json before they can access local resources likes images/videos.
- */
-function requiresServerURL(next, [recipientId, ...args]) {
-  if (SERVER_URL === 'to_be_set_manually') {
-    var messageData = {
-      recipient: {
-        id: recipientId
-      },
-      message: {
-        text: `
-          We have static resources like images and videos available to test, but you need to update the code you downloaded earlier to tell us your current server url.
-          1. Stop your node server by typing ctrl-c
-          2. Paste the result you got from running "lt —port 5000" into your config/default.json file as the "serverURL".
-          3. Re-run "node router.js"
-          Once you've finished these steps, try typing “video” or “image”.
-        `
-      }
-    };
-
-    callSendAPI(messageData);
-  } else {
-    next.apply(this, [recipientId, ...args]);
-  }
-}
-
-function sendHiMessage(recipientId) {
+async function sendHiMessage(recipientId, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
   var messageData = {
     recipient: {
       id: recipientId
@@ -457,14 +449,25 @@ function sendHiMessage(recipientId) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send an image using the Send API.
  *
  */
-function sendImageMessage(recipientId) {
+async function sendImageMessage(recipientId, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
+
   var messageData = {
     recipient: {
       id: recipientId
@@ -473,20 +476,30 @@ function sendImageMessage(recipientId) {
       attachment: {
         type: 'image',
         payload: {
-          url: SERVER_URL + '/assets/rift.png'
+          url: app.server_url + '/assets/rift.png'
         }
       }
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send a Gif using the Send API.
  *
  */
-function sendGifMessage(recipientId) {
+async function sendGifMessage(recipientId, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
   var messageData = {
     recipient: {
       id: recipientId
@@ -495,20 +508,31 @@ function sendGifMessage(recipientId) {
       attachment: {
         type: 'image',
         payload: {
-          url: SERVER_URL + '/assets/instagram_logo.gif'
+          url: app.server_url + '/assets/instagram_logo.gif'
         }
       }
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send audio using the Send API.
  *
  */
-function sendAudioMessage(recipientId) {
+async function sendAudioMessage(recipientId, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
+
   var messageData = {
     recipient: {
       id: recipientId
@@ -517,20 +541,31 @@ function sendAudioMessage(recipientId) {
       attachment: {
         type: 'audio',
         payload: {
-          url: SERVER_URL + '/assets/sample.mp3'
+          url: app.server_url + '/assets/sample.mp3'
         }
       }
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send a video using the Send API.
  *
  */
-function sendVideoMessage(recipientId) {
+async function sendVideoMessage(recipientId, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
+
   var messageData = {
     recipient: {
       id: recipientId
@@ -539,20 +574,31 @@ function sendVideoMessage(recipientId) {
       attachment: {
         type: 'video',
         payload: {
-          url: SERVER_URL + '/assets/allofus480.mov'
+          url: app.server_url + '/assets/allofus480.mov'
         }
       }
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send a file using the Send API.
  *
  */
-function sendFileMessage(recipientId) {
+async function sendFileMessage(recipientId, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
+
   var messageData = {
     recipient: {
       id: recipientId
@@ -561,20 +607,30 @@ function sendFileMessage(recipientId) {
       attachment: {
         type: 'file',
         payload: {
-          url: SERVER_URL + '/assets/test.txt'
+          url: app.server_url + '/assets/test.txt'
         }
       }
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send a text message using the Send API.
  *
  */
-function sendTextMessage(recipientId, messageText) {
+async function sendTextMessage(recipientId, messageText, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
   var messageData = {
     recipient: {
       id: recipientId
@@ -585,14 +641,25 @@ function sendTextMessage(recipientId, messageText) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send a button message using the Send API.
  *
  */
-function sendButtonMessage(recipientId) {
+async function sendButtonMessage(recipientId, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
+
   var messageData = {
     recipient: {
       id: recipientId
@@ -625,14 +692,24 @@ function sendButtonMessage(recipientId) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send a Structured Message (Generic Message type) using the Send API.
  *
  */
-function sendGenericMessage(recipientId) {
+async function sendGenericMessage(recipientId, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
   var messageData = {
     recipient: {
       id: recipientId
@@ -647,7 +724,7 @@ function sendGenericMessage(recipientId) {
               title: 'rift',
               subtitle: 'Next-generation virtual reality',
               item_url: 'https://www.oculus.com/en-us/rift/',
-              image_url: SERVER_URL + '/assets/rift.png',
+              image_url: app.server_url + '/assets/rift.png',
               buttons: [
                 {
                   type: 'web_url',
@@ -665,7 +742,7 @@ function sendGenericMessage(recipientId) {
               title: 'touch',
               subtitle: 'Your Hands, Now in VR',
               item_url: 'https://www.oculus.com/en-us/touch/',
-              image_url: SERVER_URL + '/assets/touch.png',
+              image_url: app.server_url + '/assets/touch.png',
               buttons: [
                 {
                   type: 'web_url',
@@ -685,17 +762,27 @@ function sendGenericMessage(recipientId) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send a receipt message using the Send API.
  *
  */
-function sendReceiptMessage(recipientId) {
+async function sendReceiptMessage(recipientId, appId, pageId) {
   // Generate a random receipt ID as the API requires a unique ID
-  var receiptId = 'order' + Math.floor(Math.random() * 1000);
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
 
+  var receiptId = 'order' + Math.floor(Math.random() * 1000);
   var messageData = {
     recipient: {
       id: recipientId
@@ -717,7 +804,7 @@ function sendReceiptMessage(recipientId) {
               quantity: 1,
               price: 599.0,
               currency: 'USD',
-              image_url: SERVER_URL + '/assets/riftsq.png'
+              image_url: app.server_url + '/assets/riftsq.png'
             },
             {
               title: 'Samsung Gear VR',
@@ -725,7 +812,7 @@ function sendReceiptMessage(recipientId) {
               quantity: 1,
               price: 99.99,
               currency: 'USD',
-              image_url: SERVER_URL + '/assets/gearvrsq.png'
+              image_url: app.server_url + '/assets/gearvrsq.png'
             }
           ],
           address: {
@@ -757,14 +844,25 @@ function sendReceiptMessage(recipientId) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send a message with Quick Reply buttons.
  *
  */
-function sendQuickReply(recipientId) {
+async function sendQuickReply(recipientId, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
+
   var messageData = {
     recipient: {
       id: recipientId
@@ -791,15 +889,25 @@ function sendQuickReply(recipientId) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send a read receipt to indicate the message has been read
  *
  */
-function sendReadReceipt(recipientId) {
+async function sendReadReceipt(recipientId, appId, pageId) {
   _log('Sending a read receipt to mark message as seen');
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
 
   var messageData = {
     recipient: {
@@ -808,15 +916,26 @@ function sendReadReceipt(recipientId) {
     sender_action: 'mark_seen'
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Turn typing indicator on
  *
  */
-function sendTypingOn(recipientId) {
+async function sendTypingOn(recipientId, appId, pageId) {
   _log('Turning typing indicator on');
+
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
 
   var messageData = {
     recipient: {
@@ -825,15 +944,26 @@ function sendTypingOn(recipientId) {
     sender_action: 'typing_on'
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Turn typing indicator off
  *
  */
-function sendTypingOff(recipientId) {
+async function sendTypingOff(recipientId, appId, pageId) {
   _log('Turning typing indicator off');
+
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
 
   var messageData = {
     recipient: {
@@ -842,14 +972,25 @@ function sendTypingOff(recipientId) {
     sender_action: 'typing_off'
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
  * Send a message with the account linking call-to-action
  *
  */
-function sendAccountLinking(recipientId) {
+async function sendAccountLinking(recipientId, appId, pageId) {
+  const [page, app] = await Promise.all([
+    getPage({
+      app_id: appId,
+      id: pageId
+    }),
+    getApp({
+      app_id: appId
+    })
+  ]);
+  if (!page || !app) return;
+
   var messageData = {
     recipient: {
       id: recipientId
@@ -863,7 +1004,7 @@ function sendAccountLinking(recipientId) {
           buttons: [
             {
               type: 'account_link',
-              url: SERVER_URL + '/authorize'
+              url: app.server_url + '/authorize'
             }
           ]
         }
@@ -871,7 +1012,7 @@ function sendAccountLinking(recipientId) {
     }
   };
 
-  callSendAPI(messageData);
+  callSendAPI(messageData, page.access_token);
 }
 
 /*
@@ -879,11 +1020,11 @@ function sendAccountLinking(recipientId) {
  * get the message id in a response
  *
  */
-function callSendAPI(messageData) {
+function callSendAPI(messageData, pageAccessToken) {
   request(
     {
       uri: 'https://graph.facebook.com/v2.6/me/messages',
-      qs: { access_token: PAGE_ACCESS_TOKEN },
+      qs: { access_token: pageAccessToken },
       method: 'POST',
       json: messageData
     },

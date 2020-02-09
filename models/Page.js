@@ -34,6 +34,7 @@ var schema = new Schema({
   token_expired: { type: Date, default: Date.now() },
   subscribed_fields: [{ type: String }],
   user_facebook_id: String, // map to user info
+  app_id: String,
   created: { type: Date, default: Date.now() }
 });
 
