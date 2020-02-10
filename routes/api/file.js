@@ -30,7 +30,7 @@ async function getFile(req, res, next) {
       return next(_createError('You cannot access to file', 403));
     }
 
-    if (/^\//.test(file.path)) {
+    if (/^\//.test(file.path) || /^\w:/.test(file.path)) {
       file.filePath = path.join(file.path, file.filename);
     } else {
       file.filePath = path.join(rootPath, file.path, file.filename);
