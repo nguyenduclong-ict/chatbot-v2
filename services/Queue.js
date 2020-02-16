@@ -101,14 +101,15 @@ async function crawlCustomerFacebook(job, done) {
 
 async function getUserFacebookDetail(customer_id, access_token) {
   return new Promise((resolve, reject) => {
-    this.$axios
-      .$get(graphUrl + '/' + customer_id, {
+    axios
+      .get(graphUrl + '/' + customer_id, {
         params: {
           access_token,
           fields: 'name,profile_pic'
         }
       })
       .then(d => {
+        const d = d.data;
         resolve({
           id: customer_id,
           name: d.name,
