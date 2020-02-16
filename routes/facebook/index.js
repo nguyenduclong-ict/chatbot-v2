@@ -6,7 +6,7 @@ const { testFlow, sendFlow, sendMessageBlock, sendActionBlock } = _rq(
 
 const { getPage } = _rq('providers/PageProvider');
 const { getBlock } = _rq('providers/BlockProvider');
-
+const { getApp } = _rq('providers/AppProvider');
 /**
  * Routes
  */

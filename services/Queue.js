@@ -71,28 +71,19 @@ function postFacebookAPI(job, done) {
  */
 async function crawlCustomerFacebook(job, done) {
   // user_id : id of user in server
-  const {
-    user_id,
-    page_id,
-    page_id_facebook,
-    access_token,
-    url,
-    limit
-  } = job.data;
+  const { user_id, page_id, page_id_facebook, access_token, limit } = job.data;
   _log('crawl customer', job.data);
-  const endpoint = url || `${graphUrl}/${page_id_facebook}/conversations`;
-  const options = url
-    ? {}
-    : {
-        params: {
-          limit,
-          fields: 'senders,updated_time,link,can_reply,snippet',
-          access_token
-        }
-      };
+  const endpoint = `${graphUrl}/${page_id_facebook}/conversations`;
+  const options = {
+    params: {
+      limit,
+      fields: 'senders,updated_time,link,can_reply,snippet',
+      access_token
+    }
+  };
   const response = await axios.get(endpoint, options);
   const { data, paging } = response.data;
-  updateCustomer(data, user_id, page_id, page_id_facebook);
+  updateCustomer(data, user_id, page_id, page_id_facebook, access_token);
   if (paging && paging.next) {
     await crawlNextCustomer(
       paging.next,
@@ -108,6 +99,31 @@ async function crawlCustomerFacebook(job, done) {
   done();
 }
 
+async function getUserFacebookDetail(customer_id, access_token) {
+  return new Promise((resolve, reject) => {
+    this.$axios
+      .$get(graphUrl + '/' + customer_id, {
+        params: {
+          access_token,
+          fields: 'name,profile_pic'
+        }
+      })
+      .then(d => {
+        resolve({
+          id: customer_id,
+          name: d.name,
+          image: d.profile_pic
+        });
+      })
+      .catch(() => {
+        resolve({
+          id: customer_id,
+          image: 'failure'
+        });
+      });
+  });
+}
+
 async function crawlNextCustomer(
   url,
   access_token,
@@ -119,7 +135,7 @@ async function crawlNextCustomer(
   _log('crawl next customer ', url);
   const response = await axios.get(url);
   const { data, paging } = response.data;
-  updateCustomer(data, user_id, page_id, page_id_facebook);
+  updateCustomer(data, user_id, page_id, page_id_facebook, access_token);
   if (paging.next) {
     await crawlNextCustomer(
       paging.next,
@@ -134,7 +150,13 @@ async function crawlNextCustomer(
 }
 
 // use for crawl customer
-function updateCustomer(data, user_id, page_id, page_id_facebook) {
+function updateCustomer(
+  data,
+  user_id,
+  page_id,
+  page_id_facebook,
+  access_token
+) {
   // Save list user to database
   const tasks = [];
   data.map(function(conversation) {
@@ -151,14 +173,17 @@ function updateCustomer(data, user_id, page_id, page_id_facebook) {
       page_id,
       page_id_facebook,
       updated_time: conversation.updated_time,
-      is_subscribe: true,
       link: conversation.link
     };
     tasks.push(
-      Customer.updateOne({ user_id, page_id, id: customer.id }, customer, {
-        upsert: true,
-        setDefaultsOnInsert: true,
-        new: true
+      new Promise(async (resolve, reject) => {
+        const detail = await getUserFacebookDetail(customer.id, access_token);
+        Object.assign(customer, detail);
+        Customer.updateOne({ user_id, page_id, id: customer.id }, customer, {
+          upsert: true,
+          setDefaultsOnInsert: true,
+          new: true
+        });
       })
     );
   });

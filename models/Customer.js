@@ -28,8 +28,8 @@ var schema = new Schema({
     }
   ],
   image: String,
-  snippet: String,
-  can_reply: Boolean, // Có thể nhắn tin hay không
+  snippet: { type: String, default: '' },
+  can_reply: { type: Boolean, default: true }, // Có thể nhắn tin hay không
   is_subscribe: {
     type: Boolean,
     default: true
