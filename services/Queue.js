@@ -109,11 +109,10 @@ async function getUserFacebookDetail(customer_id, access_token) {
         }
       })
       .then(d => {
-        const d = d.data;
         resolve({
           id: customer_id,
-          name: d.name,
-          image: d.profile_pic
+          name: d.data.name,
+          image: d.data.profile_pic
         });
       })
       .catch(() => {
