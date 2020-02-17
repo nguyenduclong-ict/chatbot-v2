@@ -29,8 +29,9 @@ async function postCrawlCustomer(req, res, next) {
     page_id_facebook: pageId,
     page_id: page._id,
     access_token: page.access_token,
-    limit: 500
+    limit: 1000
   };
+  _log(params);
   const task = queue
     .create('crawl-customer', params)
     .removeOnComplete(true)
@@ -44,6 +45,7 @@ async function postCrawlCustomer(req, res, next) {
 
   task.on('complete', () => {
     // job complete
+    _log('crawl customer success');
     socketio()
       .to(page._id)
       .emit('notify', {

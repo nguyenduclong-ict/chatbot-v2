@@ -29,9 +29,10 @@ Queue.active(function(err, ids) {
     });
   });
 });
-// cronjob
+
+// Cronjob
 const Cron = require('./services/Cron');
-const cronjobs = ['broadcast-job'];
+const cronjobs = ['broadcast-job', 'crawl-customer-job'];
 Cron.filter(e => cronjobs.includes(e.name)).forEach(item => {
   _log('Start cronjob ' + item.name);
   item.job.start();

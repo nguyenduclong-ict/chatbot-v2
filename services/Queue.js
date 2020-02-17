@@ -93,10 +93,37 @@ async function crawlCustomerFacebook(job, done) {
       user_id,
       page_id_facebook
     );
+    done();
   } else {
     _log('Crawl customer success for page : ', page_id_facebook);
+    done();
   }
-  done();
+}
+
+async function crawlNextCustomer(
+  url,
+  access_token,
+  limit,
+  page_id,
+  user_id,
+  page_id_facebook
+) {
+  _log('crawl next customer ', url);
+  const response = await axios.get(url);
+  const { data, paging } = response.data;
+  updateCustomer(data, user_id, page_id, page_id_facebook, access_token);
+  if (paging.next) {
+    await crawlNextCustomer(
+      paging.next,
+      access_token,
+      limit,
+      page_id,
+      user_id,
+      page_id_facebook
+    );
+    return true;
+  }
+  return true;
 }
 
 async function getUserFacebookDetail(customer_id, access_token) {
@@ -124,31 +151,6 @@ async function getUserFacebookDetail(customer_id, access_token) {
   });
 }
 
-async function crawlNextCustomer(
-  url,
-  access_token,
-  limit,
-  page_id,
-  user_id,
-  page_id_facebook
-) {
-  _log('crawl next customer ', url);
-  const response = await axios.get(url);
-  const { data, paging } = response.data;
-  updateCustomer(data, user_id, page_id, page_id_facebook, access_token);
-  if (paging.next) {
-    await crawlNextCustomer(
-      paging.next,
-      access_token,
-      limit,
-      page_id,
-      user_id,
-      page_id_facebook
-    );
-  }
-  return true;
-}
-
 // use for crawl customer
 function updateCustomer(
   data,
@@ -159,35 +161,43 @@ function updateCustomer(
 ) {
   // Save list user to database
   const tasks = [];
-  data.map(function(conversation) {
-    let customer =
-      conversation.senders.data.find(
+  data.map(function(item) {
+    let customer = {};
+    if (item.senders) {
+      const sender = item.senders.data.find(
         sender => sender.id !== page_id_facebook
-      ) || {};
-    customer = {
-      ...customer,
-      type: 'facebook',
-      can_reply: conversation.can_reply,
-      snippet: conversation.snippet,
-      user_id,
-      page_id,
-      page_id_facebook,
-      updated_time: conversation.updated_time,
-      link: conversation.link
-    };
+      );
+      customer = {
+        ...sender,
+        type: 'facebook',
+        can_reply: item.can_reply,
+        snippet: item.snippet,
+        user_id,
+        page_id,
+        page_id_facebook,
+        updated_time: item.updated_time,
+        link: item.link
+      };
+    }
+
     tasks.push(
       new Promise(async (resolve, reject) => {
         const detail = await getUserFacebookDetail(customer.id, access_token);
         Object.assign(customer, detail);
-        Customer.updateOne({ user_id, page_id, id: customer.id }, customer, {
-          upsert: true,
-          setDefaultsOnInsert: true,
-          new: true
-        });
+        const rs = await Customer.updateOne(
+          { user_id, page_id, id: customer.id },
+          customer,
+          {
+            upsert: true,
+            setDefaultsOnInsert: true,
+            new: true
+          }
+        );
+        resolve(rs);
       })
     );
   });
-  Promise.all(tasks);
+  return Promise.all(tasks);
 }
 
 module.exports = queue;

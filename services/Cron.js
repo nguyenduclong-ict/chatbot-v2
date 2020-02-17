@@ -1,18 +1,21 @@
 var CronJob = require('cron').CronJob;
 const tasks = [];
-const { getManyPage } = require('../providers/PageProvider');
+
 const {
   getManyCustomer,
   updateManyCustomer
 } = require('../providers/CustomerProvider');
 
 const { getManyJob, updateManyJob } = require('../providers/JobProvider');
+const { getManyPage } = require('../providers/PageProvider');
 
 const Queue = require('../services/Queue');
+const { socketio } = _rq('services/Socket.IO.js');
 
-const cronJob = new CronJob(
+const broadcastJob = new CronJob(
   '0 * * * * *',
   async function() {
+    console.log('CronJob check broadcast');
     const now = new Date();
 
     const currentTime = {
@@ -152,10 +155,82 @@ async function handleJob(job) {
   }
 }
 
-tasks.push({
-  name: 'broadcast-job',
-  description: 'Check broadcast job and excute',
-  job: cronJob
-});
+const crawlCustomerJob = new CronJob(
+  '0 */5 * * * *',
+  handleCrawlCustomer,
+  null,
+  true,
+  'Asia/Ho_Chi_Minh'
+);
+
+async function handleCrawlCustomer() {
+  const now = new Date();
+
+  const currentTime = {
+    dayOfWeek: now.getDay(),
+    day: now.getDate(),
+    month: now.getMonth(),
+    year: now.getFullYear(),
+    hour: now.getHours(),
+    minute: now.getMinutes()
+  };
+  const taskGetPages = [
+    getManyPage({ crawl_customer_time: 5 }, { pagination: false })
+  ];
+
+  [5, 10, 15, 30, 45].forEach(t => {
+    if (currentTime.minute % t === 0) {
+      taskGetPages.push(
+        getManyPage({ crawl_customer_time: t }, { pagination: false })
+      );
+    }
+  });
+
+  const taskGetPagesResults = await Promise.all(taskGetPages);
+  const pages = _.concat(...taskGetPagesResults);
+  _log('CronJob crawl customer', 'times', currentTime.minute, 'pages', pages);
+
+  pages.forEach(page => {
+    const params = {
+      user_id: page.user_id,
+      page_id_facebook: page.id,
+      page_id: page._id,
+      access_token: page.access_token,
+      limit: 500
+    };
+    const task = Queue.create('crawl-customer', params)
+      .removeOnComplete(true)
+      .save();
+
+    task.on('complete', () => {
+      // job complete
+      _log('Crawl customer success for page ', {
+        id: page._id,
+        name: page.name
+      });
+
+      socketio()
+        .to(page._id)
+        .emit('notify', {
+          type: 'success',
+          action: 'crawl-customer',
+          message: 'Thu thập thông tin khách hàng thành công!'
+        });
+    });
+  });
+}
+
+tasks.push(
+  {
+    name: 'broadcast-job',
+    description: 'Check broadcast job and excute',
+    job: broadcastJob
+  },
+  {
+    name: 'crawl-customer-job',
+    description: 'Crawl customer for page',
+    job: crawlCustomerJob
+  }
+);
 
 module.exports = tasks;
