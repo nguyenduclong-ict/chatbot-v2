@@ -162,7 +162,7 @@ function updateCustomer(
   // Save list user to database
   const tasks = [];
   data.map(function(item) {
-    let customer = {};
+    let customer;
     if (item.senders) {
       const sender = item.senders.data.find(
         sender => sender.id !== page_id_facebook
@@ -178,6 +178,8 @@ function updateCustomer(
         updated_time: item.updated_time,
         link: item.link
       };
+    } else {
+      customer = item;
     }
 
     tasks.push(
@@ -201,3 +203,4 @@ function updateCustomer(
 }
 
 module.exports = queue;
+module.exports.updateCustomer = updateCustomer;

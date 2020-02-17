@@ -280,6 +280,7 @@ async function sendActionBlock(
  */
 async function sendMessage(senderId, message, access_token, wait) {
   return new Promise(async (resolve, reject) => {
+    sendTypingOn(senderId, access_token);
     try {
       const data = {
         recipient: {
@@ -308,6 +309,48 @@ async function sendMessage(senderId, message, access_token, wait) {
       resolve({ error: true, data: { error } });
     }
   });
+}
+
+/**
+ *
+ * @param {String} senderId
+ */
+function sendTypingOn(senderId, access_token) {
+  axios.post(
+    endpoint + '/me/messages',
+    {
+      recipient: {
+        id: senderId
+      },
+      sender_action: 'typing_on'
+    },
+    {
+      params: {
+        access_token
+      }
+    }
+  );
+}
+
+/**
+ *
+ * @param {String} senderId
+ */
+function sendTypingOff(senderId, access_token) {
+  axios.post(
+    endpoint + '/me/messages',
+    {
+      recipient: {
+        id: senderId
+      },
+      sender_action: 'typing_off'
+    },
+    {
+      params: {
+        access_token
+      }
+    }
+  );
 }
 
 async function getUserInfo(

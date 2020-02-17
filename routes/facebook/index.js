@@ -4,10 +4,11 @@ const { testFlow, sendFlow, sendMessageBlock, sendActionBlock } = _rq(
   'services/Facebook'
 );
 
-const { getPage } = _rq('providers/PageProvider');
+const { getPage, getManyPage } = _rq('providers/PageProvider');
 const { getBlock } = _rq('providers/BlockProvider');
 const { getApp } = _rq('providers/AppProvider');
 const { getConfig } = _rq('providers/ConfigProvider');
+const { updateCustomer } = _rq('services/Queue');
 /**
  * Routes
  */
@@ -55,9 +56,28 @@ async function handleReciveEvent(req, res, next) {
 
 function handleMessage(pageEntry) {
   pageEntry.messaging.forEach(async message => {
-    console.log(message);
     const senderId = message.sender.id;
     const pageId = message.recipient.id;
+
+    const pages = await getManyPage(
+      {
+        id: pageId
+      },
+      { pagination: false }
+    );
+    if (pages && pages.length) {
+      Promise.all(
+        pages.map(page =>
+          updateCustomer(
+            [{ id: senderId }],
+            page.user_id,
+            page._id,
+            page.id,
+            page.access_token
+          )
+        )
+      );
+    }
     // message send form plugin send to messenger
     if (message.optin) {
       const payload = parseQuery(message.optin.ref, '+');
@@ -78,8 +98,7 @@ function handleMessage(pageEntry) {
             id: pageId,
             user_id: payload.user_id,
             is_active: true
-          }),
-          getCustomer({})
+          })
         ]);
         if (!block) return; // no block found
         switch (block.type) {
@@ -121,7 +140,7 @@ async function handleWeehookVerify(req, res) {
   let token = req.query['hub.verify_token'];
   let challenge = req.query['hub.challenge'];
   // get app main
-  let config = await getConfig({ value: 'app-main-id' });
+  let config = await getConfig({ key: 'app-main-id' });
   if (!config) return res.sendStatus(403);
   let appMain = await getApp({ _id: config.value });
   if (!appMain) return res.sendStatus(403);
