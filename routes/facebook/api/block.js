@@ -139,6 +139,7 @@ async function handleUpdateBlock(req, res, next) {
       )
     );
   }
+
   try {
     task.push(updateBlock({ _id: id }, data));
     const [result] = await Promise.all(task);

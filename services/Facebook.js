@@ -91,7 +91,8 @@ async function sendMessageBlock(
   }
   try {
     // get block data if block is objectId
-    const messages = block.content.cards.map(makeMessage);
+    const messages = await Promise.all(block.content.cards.map(makeMessage));
+
     const tasks = [];
 
     senderIds.forEach(senderId => {
@@ -306,6 +307,7 @@ async function sendMessage(senderId, message, access_token, wait) {
         resolve('Send success to ' + senderId);
       }
     } catch (error) {
+      _log(error);
       resolve({ error: true, data: { error } });
     }
   });

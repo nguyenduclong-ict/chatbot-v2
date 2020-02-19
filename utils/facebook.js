@@ -1,5 +1,6 @@
 const validator = require('validator').default;
 const locales = require('./locales.json');
+const { graphUrl } = _rq('config').facebook;
 /**
  * Make message data from card
  * @param {card} card
@@ -43,30 +44,40 @@ function makeMessage(card) {
           type: 'template',
           payload: {
             template_type: 'generic',
-            elements: elements.map((element, index) => {
+            image_aspect_ratio: card.image_aspect_ratio,
+            elements: card.elements.map((element, index) => {
               const t = {
                 title: element.title,
                 image_url: element.image_url,
-                subtitle: element.subtitle,
-                default_action: element.default_action
+                subtitle: element.subtitle
               };
-              if (element.buttons) {
+              if (element.buttons && element.buttons.length) {
                 t.buttons = getButtons(element.buttons);
+              }
+              if (element.has_action) {
+                t.default_action = element.default_action;
               }
               return t;
             })
           }
         }
       };
+
       break;
     case 'image':
       validateAttachment(card);
       message = {
         attachment: {
-          type: 'image',
+          type: 'template',
           payload: {
-            url: card.url,
-            is_reusable: true
+            template_type: 'media',
+            elements: [
+              {
+                media_type: 'image',
+                attachment_id: card.attachment_id,
+                buttons: getButtons(card.buttons)
+              }
+            ]
           }
         }
       };
@@ -87,10 +98,16 @@ function makeMessage(card) {
       validateAttachment(card);
       message = {
         attachment: {
-          type: 'video',
+          type: 'template',
           payload: {
-            url: card.url,
-            is_reusable: true
+            template_type: 'media',
+            elements: [
+              {
+                media_type: 'image',
+                attachment_id: card.attachment_id,
+                buttons: getButtons(card.buttons)
+              }
+            ]
           }
         }
       };
@@ -141,6 +158,41 @@ function makeMessage(card) {
   return message;
 }
 
+/**
+ *
+ */
+async function uploadAttachment(url, access_token) {
+  try {
+    const endpoint = graphUrl + '/me/message_attachments';
+    const rs = await axios.post(
+      endpoint,
+      {
+        message: {
+          attachment: {
+            type: 'image',
+            payload: {
+              is_reusable: true,
+              url
+            }
+          }
+        }
+      },
+      {
+        params: {
+          access_token
+        }
+      }
+    );
+    return rs.data.attachment_id;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ *
+ * @param {*} buttons
+ */
 function getButtons(buttons) {
   return buttons.map(button => {
     if (button.type === 'web_url') {
@@ -162,19 +214,29 @@ function getButtons(buttons) {
 
 function validateGeneric(card) {
   const { image_aspect_ratio, elements } = card;
-  if (['horizontal', 'square'].includes(image_aspect_ratio)) {
+  _log(image_aspect_ratio);
+  if (!['horizontal', 'square'].includes(image_aspect_ratio)) {
     throw `'image_aspect_ratio' must be 'horizontal' or 'square'`;
   }
 
   elements.forEach((element, index) => {
-    const { title, subtitle, image_url, default_action, buttons } = element;
+    const {
+      title,
+      subtitle,
+      image_url,
+      default_action,
+      has_action,
+      buttons
+    } = element;
     if (!title || title.length > 80)
       throw `Generic ${index} 'title' required and limit 80 character`;
     if (subtitle && title.length > 80)
       throw `Generic ${index} 'subtitle' limit 80 character`;
     if (!validator.isURL(image_url))
       throw `Generic ${index} 'image_url' invalid`;
-    default_action && validateButtons([{ ...default_action, title: 'aa' }]);
+    if (has_action && default_action) {
+      validateButtons([{ ...default_action, title: 'aa' }]);
+    }
     buttons && validateButtons(buttons);
   });
 }
@@ -232,6 +294,12 @@ function validateButtons(buttons) {
 function validateAttachment(card) {
   if (!['video', 'audio', 'file', 'image'].includes(card.type)) {
     throw `Attachment 'type' must be 'video'|'audio'|'file'|'image'`;
+  }
+  if (['video', 'image'].includes(card.type)) {
+    if (!card.attachment_id) {
+      throw 'Attachment id invalid';
+    }
+    validateButtons(card.buttons);
   }
   if (!validator.isURL(card.url)) {
     throw `Attachment url invalid`;
