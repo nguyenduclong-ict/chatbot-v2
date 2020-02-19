@@ -141,8 +141,10 @@ async function handleWeehookVerify(req, res) {
   let challenge = req.query['hub.challenge'];
   // get app main
   let config = await getConfig({ key: 'app-main-id' });
+  _log('config', config);
   if (!config) return res.sendStatus(403);
   let appMain = await getApp({ _id: config.value });
+  _log('appMain', appMain);
   if (!appMain) return res.sendStatus(403);
   // Check if a token and mode were sent
   if (mode && token) {
