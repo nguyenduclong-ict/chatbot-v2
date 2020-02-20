@@ -103,7 +103,7 @@ function makeMessage(card) {
             template_type: 'media',
             elements: [
               {
-                media_type: 'image',
+                media_type: 'video',
                 attachment_id: card.attachment_id,
                 buttons: getButtons(card.buttons)
               }
