@@ -170,6 +170,18 @@ async function cloneFlow(flowId, from, target, userId) {
             }
           });
         }
+
+        if (card.type === 'generic') {
+          card.elements.forEach(element => {
+            element.buttons.forEach(button => {
+              if (button.type === 'postback') {
+                const payload = parseQuery(button.payload, '+');
+                payload.block = blockIdsMap[payload.block];
+                button.payload = buildQuery(payload, '+');
+              }
+            });
+          });
+        }
       });
     }
 
