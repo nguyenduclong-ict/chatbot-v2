@@ -1,7 +1,4 @@
-// get config to env
-require('dotenv').config();
 const config = require('./config');
-
 const lodash = require('lodash');
 const extraTool = require('express-extra-tool');
 extraTool.initGlobal({
@@ -58,6 +55,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // init router
 const router = extraTool.initRouter();
+console.log(router);
 app.use(router);
 
 // catch 404 and forward to error handler

@@ -1,6 +1,7 @@
 const validator = require('validator').default;
 const locales = require('./locales.json');
 const { graphUrl } = _rq('config').facebook;
+
 /**
  * Make message data from card
  * @param {card} card
