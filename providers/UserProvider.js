@@ -72,7 +72,7 @@ async function updateUser(_id, data) {
   const facebook_accounts = data.facebook_accounts || [];
   user['facebook_accounts'] = user['facebook_accounts'] || [];
   facebook_accounts.forEach(e => {
-    let index = user['facebook_accounts'].findIndex(f => f.get('id') === e.id);
+    let index = user['facebook_accounts'].findIndex(f => f.id === e.id);
     _log(index);
     if (index >= 0) {
       user['facebook_accounts'][index] = e;
