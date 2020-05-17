@@ -1,19 +1,19 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 var Schema = mongoose.Schema;
 var schema = new Schema({
   name: String,
   key: {
     type: String,
-    unique: true
+    unique: true,
   },
   value: {
-    type: String,
-    default: null
+    type: Schema.Types.Mixed,
+    default: null,
   },
-  created: { type: Date, default: Date.now() }
+  created: { type: Date, default: Date.now() },
 });
 
-var Config = mongoose.model('Config', schema);
+var Config = mongoose.model("Config", schema);
 
 module.exports = Config;
