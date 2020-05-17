@@ -1,6 +1,6 @@
-const User = require('../models/User');
-const { declareCRUD } = require('express-extra-tool').mongoose;
-const { getManyUserRole } = require('./UserRoleProvider');
+const User = require("../models/User");
+const { declareCRUD } = require("express-extra-tool").mongoose;
+const { getManyUserRole } = require("./UserRoleProvider");
 /**
  *
  * @param {{email, password, info, role, username }} param0
@@ -14,19 +14,23 @@ async function addUser({
   address,
   phone,
   roles,
-  username
+  username,
+  isBlock,
 }) {
   try {
     // check user roles
-    let isBlock = false;
     const userRoleData = await getManyUserRole({
       value: {
-        $in: roles
-      }
+        $in: roles,
+      },
     });
     const docs = userRoleData.data;
-    if (docs.length < roles.length) throw new Error('Roles not exits');
-    if (docs.some(e => e.level === 0 || e.value === 'manager')) isBlock = true;
+    if (docs.length < roles.length) throw new Error("Roles not exits");
+    if (isBlock !== undefined) {
+      if (docs.some((e) => e.level === 0 || e.value === "manager")) {
+        isBlock = true;
+      }
+    }
     const data = {
       username,
       password,
@@ -35,14 +39,14 @@ async function addUser({
       phone,
       facebook_accounts,
       is_block: isBlock,
-      roles: docs.map(r => r._id)
+      roles: docs.map((r) => r._id),
     };
     if (email) data.email = email;
     let user = new User(data);
     // add user info
     return user.save();
   } catch (error) {
-    _log('add user error', error);
+    _log("add user error", error);
   }
 }
 
@@ -54,9 +58,7 @@ async function addUser({
 async function getUser(query) {
   query = _omit(query, [null, undefined]);
   if (query === {}) return null;
-  let user = await User.findOne(query)
-    .populate('roles')
-    .lean();
+  let user = await User.findOne(query).populate("roles").lean();
   return user;
 }
 
@@ -70,18 +72,18 @@ async function updateUser(_id, data) {
   if (!user) return false;
   data = _omit(data, [null, undefined]);
   const facebook_accounts = data.facebook_accounts || [];
-  user['facebook_accounts'] = user['facebook_accounts'] || [];
-  facebook_accounts.forEach(e => {
-    let index = user['facebook_accounts'].findIndex(f => f.id === e.id);
+  user["facebook_accounts"] = user["facebook_accounts"] || [];
+  facebook_accounts.forEach((e) => {
+    let index = user["facebook_accounts"].findIndex((f) => f.id === e.id);
     _log(index);
     if (index >= 0) {
-      user['facebook_accounts'][index] = e;
+      user["facebook_accounts"][index] = e;
     } else {
-      user['facebook_accounts'].push(e);
+      user["facebook_accounts"].push(e);
     }
   });
-  Object.keys(data).forEach(key => {
-    if (key !== 'facebook_accounts') {
+  Object.keys(data).forEach((key) => {
+    if (key !== "facebook_accounts") {
       user[key] = data[key];
     }
   });
@@ -90,8 +92,8 @@ async function updateUser(_id, data) {
 }
 
 module.exports = {
-  ...declareCRUD(User, 'User'),
+  ...declareCRUD(User, "User"),
   addUser,
   updateUser,
-  getUser
+  getUser,
 };

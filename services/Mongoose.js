@@ -29,8 +29,6 @@ function connectDatabase() {
       value: true,
     });
 
-    console.log(isInitedDb);
-
     if (!isInitedDb) {
       initDatabase();
     }
@@ -41,7 +39,7 @@ async function initDatabase() {
   console.log("Begin init database");
 
   await Promise.all([
-    createUserRole({ name: "Admin", value: "admin" }),
+    createUserRole({ name: "Admin", value: "admin", level: 0 }),
     createUserRole({ name: "Manager", value: "manager" }),
   ]);
 
@@ -51,6 +49,7 @@ async function initDatabase() {
     username: "admin",
     password,
     roles: ["admin"],
+    isBlock: false,
   });
 
   await Config.update(

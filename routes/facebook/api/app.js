@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 // import model
 const {
@@ -7,26 +7,47 @@ const {
   updateManyApp,
   getManyApp,
   deleteApp,
-  getApp
-} = _rq('providers/AppProvider');
-
+  getApp,
+} = _rq("providers/AppProvider");
+const Config = require("../../../models/Config");
 // Middleware
-router.use(_md('get-user-info'), _md('admin-role'));
+router.use(_md("get-user-info"), _md("admin-role"));
 
 // route
-router.get('/', handleGetListApp);
-router.get('/:id', handleGetApp);
+router.get("/", handleGetListApp);
+router.get("/:id", handleGetApp);
 
-router.post('/', handleCreateApp);
+router.post("/", handleCreateApp);
 
-router.put('/:id', handleUpdateApp);
-router.put('/', handleUpdateManyApp);
+router.put("/:id", handleUpdateApp);
+router.put("/", handleUpdateManyApp);
 
-router.delete('/:id', handleDeleteApp);
-router.post('/', handleDeleteManyApp);
+router.delete("/:id", handleDeleteApp);
+router.post("/", handleDeleteManyApp);
+
+router.post("/set-default", handleSetDefaultApp);
 
 /**
  
+ * @param { express.request } req
+ * @param { express.response } res
+ * @param { express.next } next
+ */
+
+async function handleSetDefaultApp(req, res, next) {
+  const { appId } = req.body;
+  const u = await Config.updateOne(
+    {
+      key: "app-main-id",
+    },
+    { key: "app-main-id", value: appId },
+    { upsert: true }
+  );
+  console.log(u);
+  res.json({ success: true });
+}
+
+/**
  * @param { express.request } req
  * @param { express.response } res
  * @param { express.next } next
@@ -39,7 +60,7 @@ async function handleGetListApp(req, res, next) {
     const result = await getManyApp(query, options);
     return res.json(result);
   } catch (error) {
-    _log('get List App error : ', error);
+    _log("get List App error : ", error);
     next(error);
   }
 }
@@ -57,7 +78,7 @@ async function handleGetApp(req, res, next) {
     const result = await getApp({ _id: id });
     return res.json(result);
   } catch (error) {
-    _log('get List App error : ', error);
+    _log("get List App error : ", error);
     next(error);
   }
 }
@@ -75,7 +96,7 @@ async function handleCreateApp(req, res, next) {
     const result = await createApp(data);
     return res.json(result);
   } catch (error) {
-    _log('create App error : ', error);
+    _log("create App error : ", error);
     next(error);
   }
 }
@@ -94,7 +115,7 @@ async function handleUpdateApp(req, res, next) {
     const result = await updateApp({ _id: id }, data);
     return res.json(result);
   } catch (error) {
-    _log('update App error : ', error);
+    _log("update App error : ", error);
     next(error);
   }
 }
@@ -112,14 +133,14 @@ async function handleUpdateManyApp(req, res, next) {
     const result = await updateManyApp(
       {
         _id: {
-          $in: ids
-        }
+          $in: ids,
+        },
       },
       data
     );
     return res.json(result);
   } catch (error) {
-    _log('get List App error : ', error);
+    _log("get List App error : ", error);
     next(error);
   }
 }
@@ -137,7 +158,7 @@ async function handleDeleteApp(req, res, next) {
     const result = await deleteApp({ _id: id });
     return res.json(result);
   } catch (error) {
-    _log('Delete List App error : ', error);
+    _log("Delete List App error : ", error);
     next(error);
   }
 }
@@ -154,12 +175,12 @@ async function handleDeleteManyApp(req, res, next) {
   try {
     const result = await deleteManyApp({
       _id: {
-        $in: ids
-      }
+        $in: ids,
+      },
     });
     return res.json(result);
   } catch (error) {
-    _log('Delete many App error : ', error);
+    _log("Delete many App error : ", error);
     next(error);
   }
 }
@@ -176,12 +197,12 @@ async function handleDeleteManyApp(req, res, next) {
   try {
     const result = await deleteManyApp({
       _id: {
-        $in: ids
-      }
+        $in: ids,
+      },
     });
     return res.json(result);
   } catch (error) {
-    _log('Delete many App error : ', error);
+    _log("Delete many App error : ", error);
     next(error);
   }
 }
