@@ -1,0 +1,16 @@
+version: "3.4"
+
+services:
+  chatbot-server:
+    image: chatbot-server
+    build: .
+    environment:
+      NODE_ENV: production
+    ports:
+      - 3111:3000
+    networks:
+      - database
+networks:
+  database:
+    external:
+      name: database

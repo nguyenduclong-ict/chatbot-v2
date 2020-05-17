@@ -1,11 +1,11 @@
-const jwt = require('express-extra-tool').jwt;
-const redis = require('redis');
-const { driver, config } = require('../config').token;
+const jwt = require("express-extra-tool").jwt;
+const redis = require("redis");
+const { driver, config } = require("../config").token;
 const tokens = {};
 var client = redis.createClient();
 
 function init() {
-  if (driver === 'redis') {
+  if (driver === "redis") {
     const { host, port } = config;
     client = redis.createClient({ host, port });
   }
@@ -18,14 +18,13 @@ function init() {
 
 function addToken(token) {
   switch (driver) {
-    case 'redis':
+    case "redis":
       client.set(token, true);
       break;
     default:
       tokens[token] = true;
       break;
   }
-  tokens[token] = true;
 }
 
 /**
@@ -35,7 +34,7 @@ function addToken(token) {
 
 function removeToken(token) {
   switch (driver) {
-    case 'redis':
+    case "redis":
       client.del(token);
       break;
     default:
@@ -45,17 +44,17 @@ function removeToken(token) {
 }
 
 function getTokenData(token) {
-  if (driver === 'redis') {
+  if (driver === "redis") {
     if (client.get(token)) {
       return jwt.verify(token);
     } else {
-      throw _createError('Token not in tokens', 401);
+      throw _createError("Token not in tokens", 401);
     }
   } else {
     if (tokens[token]) {
       return jwt.verify(token);
     } else {
-      throw _createError('Token not in tokens', 401);
+      throw _createError("Token not in tokens", 401);
     }
   }
 }
@@ -65,5 +64,5 @@ init();
 module.exports = {
   addToken,
   removeToken,
-  getTokenData
+  getTokenData,
 };
