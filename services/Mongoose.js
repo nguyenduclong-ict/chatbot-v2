@@ -24,7 +24,6 @@ function initUserRole() {
   createUserRole({ name: 'Admin', value: 'admin' });
   createUserRole({ name: 'Manager', value: 'manager' });
 }
-initUserRole()
 module.exports = {
   connectDatabase
 };

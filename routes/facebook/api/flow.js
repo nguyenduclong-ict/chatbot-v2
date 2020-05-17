@@ -7,11 +7,11 @@ const {
   updateManyFlow,
   getManyFlow,
   deleteFlow,
-  getFlow
+  getFlow,
+  cloneFlow
 } = _rq('providers/FlowProvider');
-const { deleteManyBlock, createBlock, getBlock } = _rq(
-  'providers/BlockProvider'
-);
+
+const { deleteManyBlock, createBlock } = _rq('providers/BlockProvider');
 
 // Middleware
 router.use(_md('get-user-info'));
@@ -21,12 +21,13 @@ router.get('/', handleGetListFlow);
 router.get('/:id', handleGetFlow);
 
 router.post('/', handleCreateFlow);
+router.post('/clone', handleCloneFlow);
 
 router.put('/:id', handleUpdateFlow);
 router.put('/', handleUpdateManyFlow);
 
 router.delete('/:id', handleDeleteFlow);
-router.post('/', handleDeleteManyFlow);
+router.delete('/', handleDeleteManyFlow);
 
 /**
  
@@ -202,6 +203,29 @@ async function handleDeleteManyFlow(req, res, next) {
   } catch (error) {
     _log('Delete many Flow error : ', error);
     next(error);
+  }
+}
+
+/**
+ 
+ * @param { express.request } req
+ * @param { express.response } res
+ * @param { NextFunction } next
+ */
+
+async function handleCloneFlow(req, res, next) {
+  try {
+    const { flowId, target, from } = req.body; // from, target is pageId
+    const userId = req.user._id;
+
+    const rs = await cloneFlow(flowId, from, target, userId);
+    if (rs.newFlow) {
+      rs.sussess = true;
+      return res.json(rs);
+    }
+  } catch (error) {
+    console.log('Clone flow error ', error, '%error%');
+    return next(error);
   }
 }
 

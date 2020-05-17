@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 .DS_Store
 
+=======
+>>>>>>> github2/master
 # node_module
 node_modules/
 
@@ -21,4 +24,8 @@ config/index.js
 public/pages
 
 #upload
+<<<<<<< HEAD
 upload
+=======
+upload
+>>>>>>> github2/master
