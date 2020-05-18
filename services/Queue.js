@@ -157,6 +157,14 @@ function updateCustomer(data, user_id, page_id, page_id_facebook) {
       is_subscribe: true,
       link: conversation.link,
     };
+
+    // remove undefind value
+    for (const key in customer) {
+      if (customer.hasOwnProperty(key) && !customer[key]) {
+        delete customer[key];
+      }
+    }
+
     tasks.push(
       Customer.updateOne({ user_id, page_id, id: customer.id }, customer, {
         upsert: true,

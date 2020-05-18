@@ -69,7 +69,13 @@ function handleMessage(pageEntry) {
       Promise.all(
         pages.map((page) =>
           updateCustomer(
-            [{ id: senderId }],
+            [
+              {
+                senders: [{ id: senderId }],
+                snipet: message.message,
+                update_time: new Date(),
+              },
+            ],
             page.user_id,
             page._id,
             page.id,
