@@ -168,4 +168,5 @@ function updateCustomer(data, user_id, page_id, page_id_facebook) {
   Promise.all(tasks);
 }
 
+queue.updateCustomer = updateCustomer;
 module.exports = queue;

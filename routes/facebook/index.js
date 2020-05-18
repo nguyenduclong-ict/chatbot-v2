@@ -1,20 +1,20 @@
-const router = require('express').Router();
-const { parseQuery } = require('express-extra-tool').functions;
+const router = require("express").Router();
+const { parseQuery } = require("express-extra-tool").functions;
 const { testFlow, sendFlow, sendMessageBlock, sendActionBlock } = _rq(
-  'services/Facebook'
+  "services/Facebook"
 );
 
-const { getPage, getManyPage } = _rq('providers/PageProvider');
-const { getBlock } = _rq('providers/BlockProvider');
-const { getApp } = _rq('providers/AppProvider');
-const { getConfig } = _rq('providers/ConfigProvider');
-const { updateCustomer } = _rq('services/Queue');
+const { getPage, getManyPage } = _rq("providers/PageProvider");
+const { getBlock } = _rq("providers/BlockProvider");
+const { getApp } = _rq("providers/AppProvider");
+const { getConfig } = _rq("providers/ConfigProvider");
+const { updateCustomer } = _rq("services/Queue");
 /**
  * Routes
  */
 
-router.post('/webhook', handleReciveEvent);
-router.get('/webhook', handleWeehookVerify);
+router.post("/webhook", handleReciveEvent);
+router.get("/webhook", handleWeehookVerify);
 
 /*
  * All callbacks for Messenger are POST-ed. They will be sent to the same
@@ -36,10 +36,10 @@ async function handleReciveEvent(req, res, next) {
     res.sendStatus(200);
     // Make sure this is a page subscription
     const data = req.body;
-    if (data.object == 'page') {
+    if (data.object == "page") {
       // Iterate over each entry
       // There may be multiple if batched
-      data.entry.forEach(function(pageEntry) {
+      data.entry.forEach(function (pageEntry) {
         var pageID = pageEntry.id;
         var timeOfEvent = pageEntry.time;
         // const pageInfo =
@@ -50,24 +50,24 @@ async function handleReciveEvent(req, res, next) {
       });
     }
   } catch (error) {
-    _log(error, '%error%');
+    _log(error, "%error%");
   }
 }
 
 function handleMessage(pageEntry) {
-  pageEntry.messaging.forEach(async message => {
+  pageEntry.messaging.forEach(async (message) => {
     const senderId = message.sender.id;
     const pageId = message.recipient.id;
 
     const pages = await getManyPage(
       {
-        id: pageId
+        id: pageId,
       },
       { pagination: false }
     );
     if (pages && pages.length) {
       Promise.all(
-        pages.map(page =>
+        pages.map((page) =>
           updateCustomer(
             [{ id: senderId }],
             page.user_id,
@@ -80,8 +80,8 @@ function handleMessage(pageEntry) {
     }
     // message send form plugin send to messenger
     if (message.optin) {
-      const payload = parseQuery(message.optin.ref, '+');
-      if (payload.action === 'test-flow') {
+      const payload = parseQuery(message.optin.ref, "+");
+      if (payload.action === "test-flow") {
         const { flow_id, user_id } = payload;
         testFlow(flow_id, senderId, user_id, pageId);
       }
@@ -89,7 +89,7 @@ function handleMessage(pageEntry) {
 
     // handle post back
     if (message.postback) {
-      const payload = parseQuery(message.postback.payload, '+');
+      const payload = parseQuery(message.postback.payload, "+");
       if (payload.block) {
         // send next block
         const [block, page] = await Promise.all([
@@ -97,23 +97,26 @@ function handleMessage(pageEntry) {
           getPage({
             id: pageId,
             user_id: payload.user_id,
-            is_active: true
-          })
+            is_active: true,
+          }),
         ]);
         if (!block) return; // no block found
         switch (block.type) {
-          case 'message':
+          case "message":
             sendMessageBlock(
               block,
               [senderId],
               page.access_token,
               []
-            ).catch(e => _log(e, '%error%'));
+            ).catch((e) => _log(e, "%error%"));
             break;
-          case 'action':
-            sendActionBlock(block, [senderId], page.access_token, []).catch(e =>
-              _log(e, '%error%')
-            );
+          case "action":
+            sendActionBlock(
+              block,
+              [senderId],
+              page.access_token,
+              []
+            ).catch((e) => _log(e, "%error%"));
             break;
           default:
             break;
@@ -136,22 +139,22 @@ function handleMessage(pageEntry) {
  */
 
 async function handleWeehookVerify(req, res) {
-  let mode = req.query['hub.mode'];
-  let token = req.query['hub.verify_token'];
-  let challenge = req.query['hub.challenge'];
+  let mode = req.query["hub.mode"];
+  let token = req.query["hub.verify_token"];
+  let challenge = req.query["hub.challenge"];
   // get app main
-  let config = await getConfig({ key: 'app-main-id' });
-  _log('config', config);
+  let config = await getConfig({ key: "app-main-id" });
+  _log("config", config);
   if (!config) return res.sendStatus(403);
   let appMain = await getApp({ _id: config.value });
-  _log('appMain', appMain);
+  _log("appMain", appMain);
   if (!appMain) return res.sendStatus(403);
   // Check if a token and mode were sent
   if (mode && token) {
     // Check the mode and token sent are correct
-    if (mode === 'subscribe' && token === appMain.verify_token) {
+    if (mode === "subscribe" && token === appMain.verify_token) {
       // Respond with 200 OK and challenge token from the request
-      _log('WEBHOOK_VERIFIED');
+      _log("WEBHOOK_VERIFIED");
       res.status(200).send(challenge);
     } else {
       // Responds with '403 Forbidden' if verify tokens do not match
