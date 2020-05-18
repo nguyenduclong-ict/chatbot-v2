@@ -85,7 +85,7 @@ async function handleCreateJob(req, res, next) {
 
     if (!data.delay) {
       // Gửi ngay lập tức
-      await handleJob(result);
+      await handleJob({ ...result, page_id: { _id: result.page_id } });
     }
 
     return res.json(result);
