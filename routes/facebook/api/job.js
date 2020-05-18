@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 // import model
 const {
@@ -7,23 +7,23 @@ const {
   updateManyJob,
   getManyJob,
   deleteJob,
-  getJob
-} = _rq('providers/JobProvider');
-
+  getJob,
+} = _rq("providers/JobProvider");
+const { handleJob } = require("../../../services/Cron");
 // Middleware
-router.use(_md('get-user-info'));
+router.use(_md("get-user-info"));
 
 // route
-router.get('/', handleGetListJob);
-router.get('/:id', handleGetJob);
+router.get("/", handleGetListJob);
+router.get("/:id", handleGetJob);
 
-router.post('/', handleCreateJob);
+router.post("/", handleCreateJob);
 
-router.put('/:id', handleUpdateJob);
-router.put('/', handleUpdateManyJob);
+router.put("/:id", handleUpdateJob);
+router.put("/", handleUpdateManyJob);
 
-router.delete('/:id', handleDeleteJob);
-router.post('/', handleDeleteManyJob);
+router.delete("/:id", handleDeleteJob);
+router.post("/", handleDeleteManyJob);
 
 /**
  
@@ -38,12 +38,12 @@ async function handleGetListJob(req, res, next) {
   try {
     query = _omit({
       ...query,
-      user_id: req.user._id
+      user_id: req.user._id,
     });
     const result = await getManyJob(query, options);
     return res.json(result);
   } catch (error) {
-    _log('get List Job error : ', error);
+    _log("get List Job error : ", error);
     next(error);
   }
 }
@@ -61,7 +61,7 @@ async function handleGetJob(req, res, next) {
     const result = await getJob({ _id: id });
     return res.json(result);
   } catch (error) {
-    _log('get List Job error : ', error);
+    _log("get List Job error : ", error);
     next(error);
   }
 }
@@ -77,10 +77,20 @@ async function handleCreateJob(req, res, next) {
   const data = req.body;
   data.user_id = req.user._id;
   try {
+    if (!job.delay) {
+      // Gửi ngay lập tức
+      data.status = "doing";
+    }
     const result = await createJob(data);
+
+    if (!job.delay) {
+      // Gửi ngay lập tức
+      await handleJob(result);
+    }
+
     return res.json(result);
   } catch (error) {
-    _log('create Job error : ', error);
+    _log("create Job error : ", error);
     next(error);
   }
 }
@@ -99,7 +109,7 @@ async function handleUpdateJob(req, res, next) {
     const result = await updateJob({ _id: id }, data);
     return res.json(result);
   } catch (error) {
-    _log('update Job error : ', error);
+    _log("update Job error : ", error);
     next(error);
   }
 }
@@ -117,14 +127,14 @@ async function handleUpdateManyJob(req, res, next) {
     const result = await updateManyJob(
       {
         _id: {
-          $in: ids
-        }
+          $in: ids,
+        },
       },
       data
     );
     return res.json(result);
   } catch (error) {
-    _log('get List Job error : ', error);
+    _log("get List Job error : ", error);
     next(error);
   }
 }
@@ -142,7 +152,7 @@ async function handleDeleteJob(req, res, next) {
     const result = await deleteJob({ _id: id });
     return res.json(result);
   } catch (error) {
-    _log('Delete List Job error : ', error);
+    _log("Delete List Job error : ", error);
     next(error);
   }
 }
@@ -159,12 +169,12 @@ async function handleDeleteManyJob(req, res, next) {
   try {
     const result = await deleteManyJob({
       _id: {
-        $in: ids
-      }
+        $in: ids,
+      },
     });
     return res.json(result);
   } catch (error) {
-    _log('Delete many Job error : ', error);
+    _log("Delete many Job error : ", error);
     next(error);
   }
 }
@@ -181,12 +191,12 @@ async function handleDeleteManyJob(req, res, next) {
   try {
     const result = await deleteManyJob({
       _id: {
-        $in: ids
-      }
+        $in: ids,
+      },
     });
     return res.json(result);
   } catch (error) {
-    _log('Delete many Job error : ', error);
+    _log("Delete many Job error : ", error);
     next(error);
   }
 }
