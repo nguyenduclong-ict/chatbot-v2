@@ -26,10 +26,9 @@ queue.process("send-broadcast", 1000, sendBroadcast);
  */
 function sendBroadcast(job, done) {
   const { flow_id, senderIds, user_id, page_id, job_id, job_repeat } = job.data;
-  _log("send broadcast message to ", senderIds);
+  _log("send broadcast message to ", senderIds, user_id, page_id, flow_id);
   sendFlow(flow_id, senderIds, user_id, page_id)
     .then(async (rs) => {
-      _log("send broadcast success", JSON.stringify(rs, null, 2));
       // update job status
       await updateManyJob(
         { _id: job_id },
@@ -40,7 +39,6 @@ function sendBroadcast(job, done) {
       );
     })
     .catch(async (error) => {
-      _log("send flow from broadcast error", error);
       await updateManyJob(
         { _id: job_id },
         {

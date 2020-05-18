@@ -9,6 +9,7 @@ const {
   deleteJob,
   getJob,
 } = _rq("providers/JobProvider");
+const { getPage } = _rq("providers/PageProvider");
 const { handleJob } = require("../../../services/Cron");
 // Middleware
 router.use(_md("get-user-info"));
@@ -85,7 +86,10 @@ async function handleCreateJob(req, res, next) {
 
     if (!data.delay) {
       // Gửi ngay lập tức
-      await handleJob({ ...result, page_id: { _id: result.page_id } });
+      const job = result.toObject();
+      const page = await getPage({ _id: job.page_id, user_id: job.user_id });
+      job.page_id = page;
+      await handleJob(job);
     }
 
     return res.json(result);
