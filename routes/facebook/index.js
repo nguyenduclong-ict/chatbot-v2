@@ -71,7 +71,7 @@ function handleMessage(pageEntry) {
           updateCustomer(
             [
               {
-                senders: [{ id: senderId }],
+                senders: { data: [{ id: senderId }] },
                 snipet: message.message,
                 update_time: new Date(),
               },
