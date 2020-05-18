@@ -77,13 +77,13 @@ async function handleCreateJob(req, res, next) {
   const data = req.body;
   data.user_id = req.user._id;
   try {
-    if (!job.delay) {
+    if (!data.delay) {
       // Gửi ngay lập tức
       data.status = "doing";
     }
     const result = await createJob(data);
 
-    if (!job.delay) {
+    if (!data.delay) {
       // Gửi ngay lập tức
       await handleJob(result);
     }
